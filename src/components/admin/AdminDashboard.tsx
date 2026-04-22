@@ -13,26 +13,41 @@ import {
   Menu,
   X,
   GraduationCap,
+  BarChart3,
+  Users,
+  ClipboardCheck,
+  FileText,
+  MessageSquare,
 } from 'lucide-react'
 import OverviewTab from './OverviewTab'
 import SliderManager from './SliderManager'
 import NewsManager from './NewsManager'
 import ScheduleManager from './ScheduleManager'
 import VideoManager from './VideoManager'
+import StatisticsTab from './StatisticsTab'
+import StudentManager from './StudentManager'
+import AttendanceManager from './AttendanceManager'
+import GradeManager from './GradeManager'
+import ParentCommManager from './ParentCommManager'
 
 interface AdminDashboardProps {
   admin: { id: string; name: string; username: string }
   onLogout: () => void
 }
 
-type TabKey = 'overview' | 'slider' | 'news' | 'schedules' | 'videos' | 'settings'
+type TabKey = 'overview' | 'statistics' | 'students' | 'attendance' | 'grades' | 'parents' | 'slider' | 'news' | 'schedules' | 'videos' | 'settings'
 
-const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
+const tabs: { key: TabKey; label: string; icon: React.ReactNode; group?: string }[] = [
   { key: 'overview', label: 'نظرة عامة', icon: <LayoutDashboard className="w-5 h-5" /> },
-  { key: 'slider', label: 'إدارة السلايدر', icon: <ImageIcon className="w-5 h-5" /> },
-  { key: 'news', label: 'إدارة الأخبار', icon: <Newspaper className="w-5 h-5" /> },
-  { key: 'schedules', label: 'إدارة الجداول', icon: <Calendar className="w-5 h-5" /> },
-  { key: 'videos', label: 'إدارة الفيديوهات', icon: <Video className="w-5 h-5" /> },
+  { key: 'statistics', label: 'الإحصائيات', icon: <BarChart3 className="w-5 h-5" />, group: 'إدارة المدرسة' },
+  { key: 'students', label: 'إدارة الطلاب', icon: <Users className="w-5 h-5" />, group: 'إدارة المدرسة' },
+  { key: 'attendance', label: 'الحضور والغياب', icon: <ClipboardCheck className="w-5 h-5" />, group: 'إدارة المدرسة' },
+  { key: 'grades', label: 'إدارة الدرجات', icon: <FileText className="w-5 h-5" />, group: 'إدارة المدرسة' },
+  { key: 'parents', label: 'أولياء الأمور', icon: <MessageSquare className="w-5 h-5" />, group: 'إدارة المدرسة' },
+  { key: 'slider', label: 'إدارة السلايدر', icon: <ImageIcon className="w-5 h-5" />, group: 'إدارة المحتوى' },
+  { key: 'news', label: 'إدارة الأخبار', icon: <Newspaper className="w-5 h-5" />, group: 'إدارة المحتوى' },
+  { key: 'schedules', label: 'إدارة الجداول', icon: <Calendar className="w-5 h-5" />, group: 'إدارة المحتوى' },
+  { key: 'videos', label: 'إدارة الفيديوهات', icon: <Video className="w-5 h-5" />, group: 'إدارة المحتوى' },
   { key: 'settings', label: 'الإعدادات', icon: <Settings className="w-5 h-5" /> },
 ]
 
@@ -44,6 +59,16 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
     switch (activeTab) {
       case 'overview':
         return <OverviewTab onNavigate={setActiveTab} />
+      case 'statistics':
+        return <StatisticsTab />
+      case 'students':
+        return <StudentManager />
+      case 'attendance':
+        return <AttendanceManager />
+      case 'grades':
+        return <GradeManager />
+      case 'parents':
+        return <ParentCommManager />
       case 'slider':
         return <SliderManager />
       case 'news':
@@ -57,6 +82,35 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
       default:
         return <OverviewTab onNavigate={setActiveTab} />
     }
+  }
+
+  // Group tabs for sidebar
+  const renderSidebarNav = (onTabClick: (tab: TabKey) => void) => {
+    let lastGroup = ''
+    return tabs.map((tab) => {
+      const showGroup = tab.group && tab.group !== lastGroup
+      lastGroup = tab.group || ''
+      return (
+        <div key={tab.key}>
+          {showGroup && (
+            <div className="px-4 pt-4 pb-1">
+              <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">{tab.group}</span>
+            </div>
+          )}
+          <button
+            onClick={() => onTabClick(tab.key)}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+              activeTab === tab.key
+                ? 'bg-white/15 text-white shadow-sm'
+                : 'text-white/70 hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            {tab.icon}
+            <span>{tab.label}</span>
+          </button>
+        </div>
+      )
+    })
   }
 
   return (
@@ -75,7 +129,7 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
             </Button>
             <div className="flex items-center gap-2">
               <GraduationCap className="w-6 h-6" />
-              <span className="font-bold text-lg hidden sm:inline">لوحة الإدارة</span>
+              <span className="font-bold text-lg hidden sm:inline">لوحة إدارة المدرسة</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -97,22 +151,9 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
 
       <div className="flex">
         {/* Sidebar - Desktop */}
-        <aside className="hidden lg:block w-64 bg-[#2A374E] text-white min-h-[calc(100vh-4rem)] sticky top-16">
-          <nav className="p-4 space-y-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  activeTab === tab.key
-                    ? 'bg-white/15 text-white shadow-sm'
-                    : 'text-white/70 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            ))}
+        <aside className="hidden lg:block w-64 bg-[#2A374E] text-white min-h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto">
+          <nav className="p-3 space-y-0.5">
+            {renderSidebarNav(setActiveTab)}
           </nav>
         </aside>
 
@@ -123,7 +164,7 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
               className="absolute inset-0 bg-black/50"
               onClick={() => setSidebarOpen(false)}
             />
-            <aside className="absolute right-0 top-0 h-full w-72 bg-[#2A374E] text-white shadow-2xl">
+            <aside className="absolute right-0 top-0 h-full w-72 bg-[#2A374E] text-white shadow-2xl overflow-y-auto">
               <div className="flex items-center justify-between p-4 border-b border-white/10">
                 <div className="flex items-center gap-2">
                   <GraduationCap className="w-5 h-5" />
@@ -138,37 +179,24 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
                   <X className="w-5 h-5" />
                 </Button>
               </div>
-              <nav className="p-4 space-y-1">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => {
-                      setActiveTab(tab.key)
-                      setSidebarOpen(false)
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      activeTab === tab.key
-                        ? 'bg-white/15 text-white shadow-sm'
-                        : 'text-white/70 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    {tab.icon}
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
+              <nav className="p-3 space-y-0.5">
+                {renderSidebarNav((tab) => {
+                  setActiveTab(tab)
+                  setSidebarOpen(false)
+                })}
               </nav>
             </aside>
           </div>
         )}
 
-        {/* Mobile Tab Bar */}
+        {/* Mobile Tab Bar - Show only most important tabs */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 border-t shadow-lg">
-          <div className="flex justify-around items-center h-16 px-1">
-            {tabs.map((tab) => (
+          <div className="flex justify-around items-center h-16 px-1 overflow-x-auto">
+            {tabs.filter(t => ['overview', 'statistics', 'students', 'attendance', 'grades', 'parents'].includes(t.key)).map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors ${
+                className={`flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors min-w-[50px] ${
                   activeTab === tab.key
                     ? 'text-[#2A374E] dark:text-blue-400'
                     : 'text-gray-400'
