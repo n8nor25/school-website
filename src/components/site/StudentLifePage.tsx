@@ -4,12 +4,15 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Bot, Send, Trash2, ArrowRight, BookOpen, Calculator, Clock,
   Lightbulb, GraduationCap, ExternalLink, Sparkles, Brain,
-  Timer, PenTool, Headphones, X, Maximize2, Minimize2
+  Timer, PenTool, Headphones, X, Maximize2, Minimize2,
+  Target, Trophy, Star, CalendarDays, Zap, Heart, Rocket,
+  FileText, Globe, MessageCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 
 interface StudentLifePageProps {
   onBack: () => void;
@@ -73,6 +76,64 @@ const studyTools = [
   },
 ];
 
+const dailyMotivations = [
+  { text: 'النجاح ليس نهاية الطريق، والفشل ليس قاتلاً. إنما الشجاعة للاستمرار هي ما يهم.', author: 'ونستون تشرشل' },
+  { text: 'التعليم هو أقوى سلاح يمكنك استخدامه لتغيير العالم.', author: 'نيلسون مانديلا' },
+  { text: 'لا تنتظر الفرصة، بل اصنعها بنفسك.', author: 'جورج برنارد شو' },
+  { text: 'كل إنجاز عظيم كان يوماً مستحيلاً.', author: 'مثل إنجليزي' },
+  { text: 'الطريقة الوحيدة لعمل عمل عظيم هي أن تحب ما تفعله.', author: 'ستيف جوبز' },
+  { text: 'العلم نور والجهل ظلام.', author: 'مثل عربي' },
+  { text: 'من جد وجد ومن زرع حصد.', author: 'مثل عربي' },
+  { text: 'إذا أردت شيئاً بشدة، فالكون كله يتآمر لمساعدتك على تحقيقه.', author: 'باولو كويلو' },
+  { text: 'لا يهم كم تسير ببطء ما دمت لا تتوقف.', author: 'كونفوشيوس' },
+  { text: 'أنت لست ضحية ظروفك، بل أنت صانعها.', author: 'روبن شارما' },
+];
+
+const quickResources = [
+  {
+    title: 'NotebookLM',
+    description: 'مساعد جوجل الذكي للدراسة ورفع الملفات',
+    icon: <Brain className="w-6 h-6" />,
+    color: 'from-purple-500 to-pink-500',
+    url: 'https://notebooklm.google.com',
+  },
+  {
+    title: 'أكاديمية خان',
+    description: 'دروس مجانية في جميع المواد',
+    icon: <BookOpen className="w-6 h-6" />,
+    color: 'from-green-500 to-emerald-500',
+    url: 'https://www.khanacademy.org/',
+  },
+  {
+    title: 'Quizlet',
+    description: 'بطاقات تعليمية واختبارات تفاعلية',
+    icon: <PenTool className="w-6 h-6" />,
+    color: 'from-amber-500 to-orange-500',
+    url: 'https://quizlet.com/',
+  },
+  {
+    title: 'منصة عين التعليمية',
+    description: 'محتوى تعليمي مصري رسمي',
+    icon: <Globe className="w-6 h-6" />,
+    color: 'from-red-500 to-rose-500',
+    url: 'https://afnad.org/',
+  },
+  {
+    title: 'بنك المعرفة المصري',
+    description: 'موارد تعليمية ومنح دراسية',
+    icon: <FileText className="w-6 h-6" />,
+    color: 'from-teal-500 to-cyan-500',
+    url: 'https://www.ekb.eg/',
+  },
+  {
+    title: 'YouTube Education',
+    description: 'قنوات تعليمية مجانية بالعربية',
+    icon: <Headphones className="w-6 h-6" />,
+    color: 'from-red-600 to-red-500',
+    url: 'https://www.youtube.com/',
+  },
+];
+
 export default function StudentLifePage({ onBack }: StudentLifePageProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -83,17 +144,65 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
   const [sessionId] = useState(() => 'student-' + Date.now());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Daily motivation
+  const [dailyMotivation] = useState(() => {
+    const today = new Date();
+    const dayIndex = (today.getFullYear() * 366 + today.getMonth() * 31 + today.getDate()) % dailyMotivations.length;
+    return dailyMotivations[dayIndex];
+  });
+
+  // Exam countdown
+  const [examCountdown, setExamCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
   // Pomodoro state
   const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
   const [pomodoroRunning, setPomodoroRunning] = useState(false);
   const [pomodoroMode, setPomodoroMode] = useState<'work' | 'break'>('work');
+  const [pomodoroSessions, setPomodoroSessions] = useState(0);
 
   // Calculator state
   const [calcDisplay, setCalcDisplay] = useState('0');
 
+  // Study progress
+  const [todayStudyMinutes, setTodayStudyMinutes] = useState(0);
+  const [studyGoal] = useState(120); // 2 hours daily goal
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Exam countdown - targets mid-June as typical exam period
+  useEffect(() => {
+    const getExamDate = () => {
+      const now = new Date();
+      const year = now.getFullYear();
+      // exams typically start mid-June
+      let examDate = new Date(year, 5, 15); // June 15
+      if (now > examDate) {
+        examDate = new Date(year + 1, 5, 15);
+      }
+      return examDate;
+    };
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const examDate = getExamDate();
+      const diff = examDate.getTime() - now.getTime();
+
+      if (diff > 0) {
+        setExamCountdown({
+          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((diff % (1000 * 60)) / 1000),
+        });
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Pomodoro timer
   useEffect(() => {
@@ -104,6 +213,8 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
           setPomodoroRunning(false);
           if (pomodoroMode === 'work') {
             setPomodoroMode('break');
+            setPomodoroSessions((s) => s + 1);
+            setTodayStudyMinutes((m) => m + 25);
             return 5 * 60;
           } else {
             setPomodoroMode('work');
@@ -194,7 +305,6 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
       setCalcDisplay('0');
     } else if (val === '=') {
       try {
-        // Safe evaluation using Function
         const sanitized = calcDisplay.replace(/[^0-9+\-*/.()%]/g, '');
         const result = new Function(`return ${sanitized}`)();
         setCalcDisplay(String(result));
@@ -226,7 +336,7 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
       <header className="bg-[#2A374E] text-white shadow-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -243,7 +353,7 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
                 <GraduationCap className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">الحياة الطلابية</h1>
+                <h1 className="text-xl font-bold">الحياة المدرسية</h1>
                 <p className="text-blue-200 text-xs">أدوات ومساعدات دراسية ذكية</p>
               </div>
             </div>
@@ -252,7 +362,110 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 max-w-6xl">
+      <main className="flex-1 container mx-auto px-4 py-6 max-w-6xl">
+        {/* Daily Motivation Card */}
+        <div className="mb-6 animate-fade-in-up">
+          <Card className="border-0 shadow-lg overflow-hidden">
+            <CardContent className="p-0">
+              <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 p-1">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-5 flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-lg">
+                    <Star className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Zap className="w-4 h-4 text-amber-500" />
+                      <span className="text-sm font-bold text-amber-600 dark:text-amber-400">تحفيز اليوم</span>
+                    </div>
+                    <p className="text-gray-800 dark:text-gray-200 text-base md:text-lg font-medium leading-relaxed">
+                      &ldquo;{dailyMotivation.text}&rdquo;
+                    </p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">— {dailyMotivation.author}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Exam Countdown & Study Progress */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* Exam Countdown */}
+          <Card className="border-0 shadow-lg animate-fade-in-up">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <CalendarDays className="w-5 h-5 text-red-500" />
+                <h3 className="text-lg font-bold text-[#2A374E] dark:text-white">العد التنازلي للامتحانات</h3>
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                <div className="text-center bg-red-50 dark:bg-red-900/20 rounded-xl p-3">
+                  <div className="text-2xl md:text-3xl font-bold text-red-600 dark:text-red-400">{examCountdown.days}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">يوم</div>
+                </div>
+                <div className="text-center bg-orange-50 dark:bg-orange-900/20 rounded-xl p-3">
+                  <div className="text-2xl md:text-3xl font-bold text-orange-600 dark:text-orange-400">{examCountdown.hours}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">ساعة</div>
+                </div>
+                <div className="text-center bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
+                  <div className="text-2xl md:text-3xl font-bold text-amber-600 dark:text-amber-400">{examCountdown.minutes}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">دقيقة</div>
+                </div>
+                <div className="text-center bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-3">
+                  <div className="text-2xl md:text-3xl font-bold text-yellow-600 dark:text-yellow-400">{examCountdown.seconds}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">ثانية</div>
+                </div>
+              </div>
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3">
+                استعد جيداً... النجاح يبدأ من الآن! 🎯
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Study Progress */}
+          <Card className="border-0 shadow-lg animate-fade-in-up">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Target className="w-5 h-5 text-green-500" />
+                  <h3 className="text-lg font-bold text-[#2A374E] dark:text-white">هدف المذاكرة اليومي</h3>
+                </div>
+                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                  {pomodoroSessions} جلسة
+                </Badge>
+              </div>
+              <div className="mb-3">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-600 dark:text-gray-400">{todayStudyMinutes} دقيقة</span>
+                  <span className="text-gray-600 dark:text-gray-400">{studyGoal} دقيقة (هدف)</span>
+                </div>
+                <Progress value={Math.min((todayStudyMinutes / studyGoal) * 100, 100)} className="h-3" />
+              </div>
+              <div className="flex items-center gap-2 mt-4">
+                <Trophy className="w-5 h-5 text-amber-500" />
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {todayStudyMinutes >= studyGoal
+                    ? 'أحسنت! حققت هدفك اليومي 🏆'
+                    : `بقي ${studyGoal - todayStudyMinutes} دقيقة لتحقيق هدفك`}
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                <div className="text-center bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2">
+                  <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{pomodoroSessions}</div>
+                  <div className="text-xs text-gray-500">جلسات مكتملة</div>
+                </div>
+                <div className="text-center bg-green-50 dark:bg-green-900/20 rounded-lg p-2">
+                  <div className="text-lg font-bold text-green-600 dark:text-green-400">{todayStudyMinutes}</div>
+                  <div className="text-xs text-gray-500">دقيقة مذاكرة</div>
+                </div>
+                <div className="text-center bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2">
+                  <div className="text-lg font-bold text-purple-600 dark:text-purple-400">{Math.min(Math.round((todayStudyMinutes / studyGoal) * 100), 100)}%</div>
+                  <div className="text-xs text-gray-500">من الهدف</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* NotebookLM Banner */}
         <div className="mb-8 animate-fade-in-up">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-1 shadow-2xl">
@@ -382,8 +595,21 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
                 <Badge className={`mb-4 ${pomodoroMode === 'work' ? 'bg-red-500' : 'bg-green-500'} text-white`}>
                   {pomodoroMode === 'work' ? '🕐 وقت المذاكرة' : '☕ وقت الراحة'}
                 </Badge>
-                <div className="text-7xl font-mono font-bold text-[#2A374E] dark:text-white mb-6">
+                <div className="text-7xl font-mono font-bold text-[#2A374E] dark:text-white mb-4">
                   {formatPomodoroTime(pomodoroTime)}
+                </div>
+                <div className="flex items-center justify-center gap-2 mb-6">
+                  {[1, 2, 3, 4].map((session) => (
+                    <div
+                      key={session}
+                      className={`w-4 h-4 rounded-full transition-all ${
+                        session <= pomodoroSessions ? 'bg-green-500 scale-110' : 'bg-gray-300 dark:bg-gray-600'
+                      }`}
+                    />
+                  ))}
+                  <span className="text-sm text-gray-500 mr-2">
+                    الجلسة {pomodoroSessions + 1} من 4
+                  </span>
                 </div>
                 <div className="flex justify-center gap-3">
                   <Button
@@ -581,64 +807,80 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
         {/* Quick Resources Section */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-[#2A374E] dark:text-white mb-4 flex items-center gap-2">
-            <Headphones className="w-6 h-6 text-red-600" />
-            روابط سريعة مفيدة
+            <Rocket className="w-6 h-6 text-red-600" />
+            روابط تعليمية مفيدة
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {quickResources.map((resource) => (
+              <a
+                key={resource.title}
+                href={resource.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md hover:shadow-xl transition-all hover:-translate-y-1 flex items-center gap-4 group border border-gray-100 dark:border-gray-700"
+              >
+                <div className={`w-12 h-12 bg-gradient-to-r ${resource.color} rounded-xl flex items-center justify-center text-white shrink-0 group-hover:scale-110 transition-transform`}>
+                  {resource.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-800 dark:text-white">{resource.title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{resource.description}</p>
+                </div>
+                <ExternalLink className="w-4 h-4 text-gray-400 shrink-0" />
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Student Tips Cards */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-[#2A374E] dark:text-white mb-4 flex items-center gap-2">
+            <Heart className="w-6 h-6 text-red-600" />
+            نصائح مهمة للطالب الناجح
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a
-              href="https://notebooklm.google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md hover:shadow-xl transition-all hover:-translate-y-1 flex items-center gap-4 group border border-gray-100 dark:border-gray-700"
-            >
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white shrink-0 group-hover:scale-110 transition-transform">
-                <Brain className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-800 dark:text-white">NotebookLM</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">مساعد جوجل الذكي للدراسة</p>
-              </div>
-              <ExternalLink className="w-4 h-4 text-gray-400 mr-auto shrink-0" />
-            </a>
-            <a
-              href="https://www.khanacademy.org/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md hover:shadow-xl transition-all hover:-translate-y-1 flex items-center gap-4 group border border-gray-100 dark:border-gray-700"
-            >
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center text-white shrink-0 group-hover:scale-110 transition-transform">
-                <BookOpen className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-800 dark:text-white">أكاديمية خان</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">دروس مجانية في جميع المواد</p>
-              </div>
-              <ExternalLink className="w-4 h-4 text-gray-400 mr-auto shrink-0" />
-            </a>
-            <a
-              href="https://quizlet.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md hover:shadow-xl transition-all hover:-translate-y-1 flex items-center gap-4 group border border-gray-100 dark:border-gray-700"
-            >
-              <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center text-white shrink-0 group-hover:scale-110 transition-transform">
-                <PenTool className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-800 dark:text-white">Quizlet</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">بطاقات تعليمية واختبارات</p>
-              </div>
-              <ExternalLink className="w-4 h-4 text-gray-400 mr-auto shrink-0" />
-            </a>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all hover:-translate-y-1">
+              <CardContent className="p-5">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white mb-3">
+                  <MessageCircle className="w-6 h-6" />
+                </div>
+                <h3 className="font-bold text-gray-800 dark:text-white mb-2">لا تتردد في السؤال</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                  الطالب الناجح هو من يسأل ولا يخجل. إذا لم تفهم شيئاً، اسأل معلمك أو زميلك أو استخدم المساعد الذكي.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all hover:-translate-y-1">
+              <CardContent className="p-5">
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white mb-3">
+                  <GraduationCap className="w-6 h-6" />
+                </div>
+                <h3 className="font-bold text-gray-800 dark:text-white mb-2">نظّم وقتك</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                  ضع جدول مذاكرة واقعي والتزم به. خصص وقتاً لكل مادة ولا تنسَ وقت الراحة والترفيه.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all hover:-translate-y-1">
+              <CardContent className="p-5">
+                <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl flex items-center justify-center text-white mb-3">
+                  <Trophy className="w-6 h-6" />
+                </div>
+                <h3 className="font-bold text-gray-800 dark:text-white mb-2">ثق بنفسك</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                  كل طالب لديه القدرة على التفوق. المهم أن تبدأ وتستمر ولا تستسلم أبداً. النجاح قادم!
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#2A374E] text-white py-6 mt-8">
+      <footer className="bg-[#2A374E] text-white py-6 mt-auto">
         <div className="container mx-auto px-4 text-center">
           <p className="text-gray-400 text-sm">
-            &copy; {new Date().getFullYear()} مدرسة الاحايوه شرق الاعدادية - الحياة الطلابية
+            &copy; {new Date().getFullYear()} مدرسة الاحايوه شرق الاعدادية - الحياة المدرسية
           </p>
         </div>
       </footer>

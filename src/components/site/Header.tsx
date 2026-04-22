@@ -16,7 +16,7 @@ const navLinks = [
   { label: 'عن المدرسة', href: '#about' },
   { label: 'البرامج التعليمية', href: '#departments' },
   { label: 'جدول الحصص', href: '#schedule-section' },
-  { label: 'الحياة الطلابية', href: 'student-life', isStudentLife: true },
+  { label: 'الحياة المدرسية', href: 'student-life', isStudentLife: true },
   { label: 'اتصل بنا', href: '#contact' },
 ];
 

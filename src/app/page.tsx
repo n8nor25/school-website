@@ -15,6 +15,7 @@ import ScheduleSection from '@/components/site/ScheduleSection';
 import Footer from '@/components/site/Footer';
 import AdminLogin from '@/components/admin/AdminLogin';
 import AdminDashboard from '@/components/admin/AdminDashboard';
+import StudentLifePage from '@/components/site/StudentLifePage';
 
 interface AdminData {
   id: string;
@@ -24,6 +25,7 @@ interface AdminData {
 
 export default function Home() {
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showStudentLife, setShowStudentLife] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedMode = localStorage.getItem('darkMode');
@@ -85,6 +87,21 @@ export default function Home() {
     }
   };
 
+  const handleStudentLifeClick = () => {
+    setShowStudentLife(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackFromStudentLife = () => {
+    setShowStudentLife(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Student Life view
+  if (showStudentLife && !showAdmin) {
+    return <StudentLifePage onBack={handleBackFromStudentLife} />;
+  }
+
   // Admin view
   if (showAdmin) {
     if (!admin) {
@@ -127,6 +144,7 @@ export default function Home() {
         onAdminClick={handleAdminClick}
         isLoggedIn={!!admin}
         onLogout={handleAdminLogout}
+        onStudentLifeClick={handleStudentLifeClick}
       />
       <main className="flex-1">
         <Hero />
