@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء أيقونات PWA</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        canvas {
+            border: 2px solid white;
+            border-radius: 10px;
+            margin: 10px;
+            background: white;
+        }
+        button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .preview {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 إنشاء أيقونات PWA لأكاديمية الشرق</h1>
+        <p>انقر على "إنشاء الأيقونات" لتحميل أيقونات التطبيق</p>
+        
+        <div class="preview">
+            <div>
+                <h3>أيقونة 192x192</h3>
+                <canvas id="canvas192" width="192" height="192"></canvas>
+            </div>
+            <div>
+                <h3>أيقونة 512x512</h3>
+                <canvas id="canvas512" width="512" height="512"></canvas>
+            </div>
+        </div>
+        
+        <button onclick="generateIcons()">🚀 إنشاء الأيقونات</button>
+        <button onclick="downloadAll()">📥 تحميل جميع الأيقونات</button>
+    </div>
+
+    <script>
+        function createIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Background gradient
+            const gradient = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            
+            // Draw background circle
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2 - 8, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // White border
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+            
+            // Book icon
+            const bookWidth = size * 0.5;
+            const bookHeight = size * 0.35;
+            const bookX = (size - bookWidth) / 2;
+            const bookY = (size - bookHeight) / 2 - 10;
+            
+            // Book gradient
+            const bookGradient = ctx.createLinearGradient(bookX, bookY, bookX + bookWidth, bookY + bookHeight);
+            bookGradient.addColorStop(0, '#4facfe');
+            bookGradient.addColorStop(1, '#00f2fe');
+            
+            // Book base
+            ctx.fillStyle = bookGradient;
+            ctx.fillRect(bookX, bookY, bookWidth, bookHeight);
+            
+            // Book pages (white)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(bookX + 8, bookY + 8, bookWidth - 16, bookHeight - 16);
+            
+            // Book lines
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 6; i++) {
+                const lineY = bookY + 15 + (i * 10);
+                ctx.beginPath();
+                ctx.moveTo(bookX + 15, lineY);
+                ctx.lineTo(bookX + bookWidth - 15, lineY);
+                ctx.stroke();
+            }
+            
+            // Arabic text
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${size/18}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText('أكاديمية الشرق', size/2, bookY + bookHeight + 25);
+            
+            // English text
+            ctx.font = `bold ${size/22}px Arial`;
+            ctx.fillText('Alsharq Academia', size/2, bookY + bookHeight + 45);
+        }
+        
+        function generateIcons() {
+            createIcon(document.getElementById('canvas192'), 192);
+            createIcon(document.getElementById('canvas512'), 512);
+            alert('تم إنشاء الأيقونات بنجاح! 🎉');
+        }
+        
+        function downloadAll() {
+            // Download 192x192
+            const canvas192 = document.getElementById('canvas192');
+            const link192 = document.createElement('a');
+            link192.download = 'icon-192x192.png';
+            link192.href = canvas192.toDataURL('image/png');
+            link192.click();
+            
+            // Download 512x512
+            const canvas512 = document.getElementById('canvas512');
+            const link512 = document.createElement('a');
+            link512.download = 'icon-512x512.png';
+            link512.href = canvas512.toDataURL('image/png');
+            link512.click();
+            
+            alert('تم تحميل الأيقونات! 📥');
+        }
+        
+        // Generate icons on page load
+        window.onload = function() {
+            generateIcons();
+        };
+    </script>
+</body>
+</html>

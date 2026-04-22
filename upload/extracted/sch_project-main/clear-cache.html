@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مسح Cache المتصفح</title>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 50px;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .instructions {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+        .steps {
+            text-align: right;
+            margin: 20px 0;
+        }
+        .step {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border-right: 4px solid #ff6b6b;
+        }
+        .keyboard {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        .button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 مسح Cache المتصفح</h1>
+        
+        <div class="instructions">
+            <p>لحل مشكلة البيانات غير المحدثة، يرجى اتباع الخطوات التالية:</p>
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <strong>الخطوة 1:</strong> اضغط على <span class="keyboard">Ctrl + Shift + R</span> لمسح cache وإعادة تحميل الصفحة
+            </div>
+            
+            <div class="step">
+                <strong>الخطوة 2:</strong> أو اضغط على <span class="keyboard">F12</span> لفتح Developer Tools
+            </div>
+            
+            <div class="step">
+                <strong>الخطوة 3:</strong> اضغط بالزر الأيمن على زر التحديث واختر "Empty Cache and Hard Reload"
+            </div>
+            
+            <div class="step">
+                <strong>الخطوة 4:</strong> أو اذهب إلى Settings > Privacy > Clear browsing data
+            </div>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ تحذير:</strong> مسح cache سيؤدي إلى إعادة تحميل جميع المواقع، لكنه سيحل مشكلة البيانات القديمة.
+        </div>
+
+        <button class="button" onclick="location.reload(true)">
+            🔄 إعادة تحميل الصفحة
+        </button>
+        
+        <button class="button" onclick="window.open('http://localhost:3000', '_blank')">
+            🏠 فتح الموقع
+        </button>
+        
+        <button class="button" onclick="window.open('http://192.168.1.12:3000', '_blank')">
+            🌐 فتح الموقع (IP)
+        </button>
+    </div>
+
+    <script>
+        // إضافة timestamp لضمان عدم cache
+        const timestamp = new Date().getTime();
+        console.log('Cache cleared at:', new Date().toLocaleString());
+        
+        // مسح localStorage و sessionStorage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // إضافة meta tags لمنع cache
+        const metaTags = [
+            { name: 'cache-control', content: 'no-cache, no-store, must-revalidate' },
+            { name: 'pragma', content: 'no-cache' },
+            { name: 'expires', content: '0' }
+        ];
+        
+        metaTags.forEach(tag => {
+            const meta = document.createElement('meta');
+            meta.setAttribute('http-equiv', tag.name);
+            meta.setAttribute('content', tag.content);
+            document.head.appendChild(meta);
+        });
+    </script>
+</body>
+</html>

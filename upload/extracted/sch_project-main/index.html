@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مدرسةالاحايوه ع </title>
+    
+    <!-- Cache Control Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="cache-control" content="max-age=0" />
+    <meta name="expires" content="0" />
+    <meta name="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+    <meta name="pragma" content="no-cache" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="منصة تعليمية متكاملة تقدم خدمات تعليمية متميزة للطلاب والمعلمين" />
+    <meta name="theme-color" content="#667eea" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Alsharq Academia" />
+    <meta name="msapplication-TileColor" content="#667eea" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png" />
+    
+    <!-- PWA Splash Screens for iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-startup-image" href="/icons/icon-512x512.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Cairo', 'sans-serif'],
+            },
+            backgroundImage: {
+              'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+              'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+              'hero-gradient': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              'academic-gradient': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              'education-gradient': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+              'success-gradient': 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+              'warm-gradient': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+              'cool-gradient': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+            },
+            animation: {
+              'fade-in-up': 'fadeInUp 0.6s ease-out',
+              'fade-in-left': 'fadeInLeft 0.6s ease-out',
+              'fade-in-right': 'fadeInRight 0.6s ease-out',
+              'scale-in': 'scaleIn 0.5s ease-out',
+              'bounce-in': 'bounceIn 0.8s ease-out',
+              'float': 'float 3s ease-in-out infinite',
+              'glow': 'glow 2s ease-in-out infinite',
+              'shimmer': 'shimmer 1.5s ease-in-out infinite',
+              'gradient-shift': 'gradientShift 3s ease infinite',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Cairo', sans-serif;
+      }
+      .news-ticker-container {
+        mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+      }
+      .animate-scroll-up {
+        animation: scroll-up 180s linear infinite;
+      }
+      @keyframes scroll-up {
+        from { transform: translateY(0%); }
+        to { transform: translateY(-50%); } /* -50% because the list is duplicated */
+      }
+      .news-ticker-container:hover .animate-scroll-up {
+        animation-play-state: paused;
+      }
+      .news-ticker-container:hover {
+        animation-play-state: paused;
+        background-color: rgba(255, 255, 255, 0.02);
+        transition: background-color 0.3s ease;
+      }
+      .dark .news-ticker-container:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+      .news-item:hover {
+        transform: translateX(-8px);
+        transition: all 0.3s ease;
+        background-color: rgba(239, 68, 68, 0.1);
+        padding: 6px 12px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+      }
+      .news-item {
+        transition: all 0.3s ease;
+      }
+      .dark .news-item:hover {
+        background-color: rgba(239, 68, 68, 0.15);
+        box-shadow: 0 2px 12px rgba(239, 68, 68, 0.3);
+      }
+      
+      /* إصلاح السلايدر ليملأ المساحة بشكل صحيح */
+      .slider-container {
+        height: 100%;
+        min-height: 400px;
+      }
+      
+      .slider-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
+      
+      /* منع التداخل في التخطيط */
+      .hero-grid {
+        display: grid;
+        gap: 1rem;
+        align-items: start;
+      }
+      
+      @media (min-width: 1024px) {
+        .hero-grid {
+          grid-template-columns: 9fr 3fr;
+        }
+      }
+      
+      .slider-section {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      
+      .news-section {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      
+      /* حل مشكلة التداخل عند نسبة العرض 100% */
+      @media (min-width: 1024px) {
+        .grid.lg\:grid-cols-4 {
+          display: grid;
+          grid-template-columns: 3fr 1fr;
+          gap: 1rem;
+          width: 100%;
+        }
+        
+        .lg\:col-span-3:first-child {
+          grid-column: 1;
+          width: 100%;
+        }
+        
+        .lg\:col-span-3:last-child {
+          grid-column: 2;
+          width: 100%;
+        }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+  }
+}
+</script>
+    <link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="/src/styles/animations.css">
+    <link rel="stylesheet" href="/src/styles/skeleton.css">
+    <link rel="stylesheet" href="/src/styles/responsive.css">
+    <link rel="stylesheet" href="/src/styles/typography.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+      
+      // PWA Install Prompt
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('PWA install prompt triggered');
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show install button or banner
+        const installButton = document.createElement('button');
+        installButton.textContent = 'تثبيت التطبيق';
+        installButton.className = 'fixed bottom-4 left-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        installButton.onclick = () => {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('User accepted the install prompt');
+            } else {
+              console.log('User dismissed the install prompt');
+            }
+            deferredPrompt = null;
+            installButton.remove();
+          });
+        };
+        document.body.appendChild(installButton);
+      });
+      
+      // PWA Install Success
+      window.addEventListener('appinstalled', (evt) => {
+        console.log('PWA was installed');
+      });
+    </script>
+  </body>
+</html>

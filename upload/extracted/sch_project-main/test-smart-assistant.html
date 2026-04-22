@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار المساعد الذكي</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            background: #f9f9f9;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .test-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+        }
+        .result {
+            background: #f0f8ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; color: #333; margin-bottom: 30px;">
+            🤖 اختبار المساعد الذكي
+        </h1>
+
+        <!-- اختبار API الأساسي -->
+        <div class="test-section">
+            <h3>🔧 اختبار API الأساسي</h3>
+            <p>اختبار الاتصال بـ OpenRouter API والذكاء الاصطناعي</p>
+            <button class="test-button" onclick="testBasicAPI()">اختبار API</button>
+            <div id="basic-api-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- اختبار YouTube API -->
+        <div class="test-section">
+            <h3>📺 اختبار YouTube API</h3>
+            <p>اختبار البحث عن الفيديوهات التعليمية</p>
+            <button class="test-button" onclick="testYouTubeAPI()">اختبار YouTube</button>
+            <div id="youtube-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- اختبار معالجة الملفات -->
+        <div class="test-section">
+            <h3>📄 اختبار معالجة الملفات</h3>
+            <p>اختبار رفع ومعالجة الملفات (PDF, Word, TXT)</p>
+            <input type="file" id="file-input" accept=".txt,.pdf,.doc,.docx" style="margin: 10px 0;">
+            <button class="test-button" onclick="testFileProcessing()">اختبار معالجة الملف</button>
+            <div id="file-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- اختبار التكامل الكامل -->
+        <div class="test-section">
+            <h3>🚀 اختبار التكامل الكامل</h3>
+            <p>اختبار جميع الخدمات معاً</p>
+            <button class="test-button" onclick="testFullIntegration()">اختبار شامل</button>
+            <div id="integration-result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // اختبار API الأساسي
+        async function testBasicAPI() {
+            const resultDiv = document.getElementById('basic-api-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = 'جاري اختبار API...';
+
+            try {
+                const response = await fetch('/api/test-smart-ai', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: 'مرحبا، كيف حالك؟',
+                        subject: 'عام'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ API يعمل بشكل صحيح!\n\nالرد: ${data.reply}`;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ خطأ في API: ${error.message}`;
+            }
+        }
+
+        // اختبار YouTube API
+        async function testYouTubeAPI() {
+            const resultDiv = document.getElementById('youtube-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = 'جاري اختبار YouTube API...';
+
+            try {
+                const response = await fetch('/api/test-youtube', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: 'شرح الرياضيات',
+                        subject: 'الرياضيات'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ YouTube API يعمل بشكل صحيح!\n\nالنتائج: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ خطأ في YouTube API: ${error.message}`;
+            }
+        }
+
+        // اختبار معالجة الملفات
+        async function testFileProcessing() {
+            const fileInput = document.getElementById('file-input');
+            const resultDiv = document.getElementById('file-result');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ يرجى اختيار ملف أولاً';
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = 'جاري معالجة الملف...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+
+                const response = await fetch('/api/test-file-processing', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ معالجة الملف نجحت!\n\nالمحتوى المستخرج: ${data.text.substring(0, 200)}...`;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ خطأ في معالجة الملف: ${error.message}`;
+            }
+        }
+
+        // اختبار التكامل الكامل
+        async function testFullIntegration() {
+            const resultDiv = document.getElementById('integration-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = 'جاري اختبار التكامل الكامل...';
+
+            try {
+                const tests = [
+                    { name: 'API الأساسي', test: () => fetch('/api/test-smart-ai', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message: 'مرحبا', subject: 'عام'})}) },
+                    { name: 'YouTube API', test: () => fetch('/api/test-youtube', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({query: 'شرح', subject: 'عام'})}) },
+                    { name: 'معالجة الملفات', test: () => fetch('/api/test-file-processing', { method: 'POST', body: new FormData()}) }
+                ];
+
+                let results = [];
+                for (const test of tests) {
+                    try {
+                        const response = await test.test();
+                        results.push(`✅ ${test.name}: ${response.ok ? 'نجح' : 'فشل'}`);
+                    } catch (error) {
+                        results.push(`❌ ${test.name}: ${error.message}`);
+                    }
+                }
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `🎉 نتائج الاختبار الشامل:\n\n${results.join('\n')}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ خطأ في الاختبار الشامل: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
+
+

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create PWA Icons</title>
+</head>
+<body>
+    <canvas id="canvas192" width="192" height="192" style="border: 1px solid #ccc; margin: 10px;"></canvas>
+    <canvas id="canvas512" width="512" height="512" style="border: 1px solid #ccc; margin: 10px;"></canvas>
+    <br>
+    <button onclick="downloadIcons()">تحميل الأيقونات</button>
+    
+    <script>
+        function createIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            
+            // Draw background circle
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2 - 10, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw white border
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Draw book icon
+            const bookWidth = size * 0.4;
+            const bookHeight = size * 0.3;
+            const bookX = (size - bookWidth) / 2;
+            const bookY = (size - bookHeight) / 2;
+            
+            // Book base
+            const bookGradient = ctx.createLinearGradient(bookX, bookY, bookX + bookWidth, bookY + bookHeight);
+            bookGradient.addColorStop(0, '#4facfe');
+            bookGradient.addColorStop(1, '#00f2fe');
+            
+            ctx.fillStyle = bookGradient;
+            ctx.fillRect(bookX, bookY, bookWidth, bookHeight);
+            
+            // Book pages
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(bookX + 5, bookY + 5, bookWidth - 10, bookHeight - 10);
+            
+            // Book lines
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 5; i++) {
+                const lineY = bookY + 10 + (i * 8);
+                ctx.beginPath();
+                ctx.moveTo(bookX + 10, lineY);
+                ctx.lineTo(bookX + bookWidth - 10, lineY);
+                ctx.stroke();
+            }
+            
+            // Arabic text
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${size/20}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText('أكاديمية الشرق', size/2, size/2 + bookHeight/2 + 20);
+            
+            // English text
+            ctx.font = `bold ${size/25}px Arial`;
+            ctx.fillText('Alsharq Academia', size/2, size/2 + bookHeight/2 + 40);
+        }
+        
+        function downloadIcons() {
+            // Create 192x192 icon
+            const canvas192 = document.getElementById('canvas192');
+            createIcon(canvas192, 192);
+            const link192 = document.createElement('a');
+            link192.download = 'icon-192x192.png';
+            link192.href = canvas192.toDataURL();
+            link192.click();
+            
+            // Create 512x512 icon
+            const canvas512 = document.getElementById('canvas512');
+            createIcon(canvas512, 512);
+            const link512 = document.createElement('a');
+            link512.download = 'icon-512x512.png';
+            link512.href = canvas512.toDataURL();
+            link512.click();
+        }
+        
+        // Create icons on page load
+        window.onload = function() {
+            createIcon(document.getElementById('canvas192'), 192);
+            createIcon(document.getElementById('canvas512'), 512);
+        };
+    </script>
+</body>
+</html>

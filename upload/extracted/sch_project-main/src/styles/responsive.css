@@ -1,0 +1,387 @@
+/* Responsive Design Improvements */
+
+/* Mobile First Approach */
+@media (max-width: 640px) {
+  /* Header improvements */
+  .header-top-bar {
+    display: none !important;
+  }
+  
+  .header-main {
+    padding: 0.5rem 1rem;
+  }
+  
+  .header-logo {
+    font-size: 1.125rem;
+  }
+  
+  .header-nav {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .header-nav::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Hero section */
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .hero-slider {
+    aspect-ratio: 16/9;
+    min-height: 200px;
+  }
+  
+  .hero-news {
+    height: auto;
+    min-height: 300px;
+  }
+  
+  /* About section */
+  .about-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .about-video {
+    order: -1;
+  }
+  
+  /* Services grid */
+  .services-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .service-card {
+    padding: 1rem;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  /* Departments carousel */
+  .departments-carousel {
+    padding: 0 1rem;
+  }
+  
+  .department-card {
+    min-width: 280px;
+  }
+  
+  /* Tutors carousel */
+  .tutors-carousel {
+    padding: 0 1rem;
+  }
+  
+  .tutor-card {
+    min-width: 250px;
+  }
+  
+  /* Gallery grid */
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  /* Photo modal */
+  .photo-modal {
+    padding: 1rem;
+  }
+  
+  .photo-modal img {
+    max-height: 60vh;
+  }
+  
+  .photo-modal-buttons {
+    display: none;
+  }
+  
+  /* Typography adjustments */
+  .section-title {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+  
+  .section-subtitle {
+    font-size: 1rem;
+  }
+  
+  /* Button improvements */
+  .btn-primary {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Spacing adjustments */
+  .section-padding {
+    padding: 2rem 0;
+  }
+  
+  .container-padding {
+    padding: 0 1rem;
+  }
+}
+
+/* Tablet improvements */
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Hero section */
+  .hero-grid {
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+  }
+  
+  /* Services grid */
+  .services-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  
+  /* Gallery grid */
+  .gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  
+  /* Departments carousel */
+  .department-card {
+    min-width: 300px;
+  }
+  
+  /* Tutors carousel */
+  .tutor-card {
+    min-width: 280px;
+  }
+  
+  /* Typography */
+  .section-title {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+  
+  /* Spacing */
+  .section-padding {
+    padding: 3rem 0;
+  }
+}
+
+/* Desktop improvements */
+@media (min-width: 1025px) {
+  /* Hero section */
+  .hero-grid {
+    grid-template-columns: 3fr 1fr;
+    gap: 2rem;
+  }
+  
+  /* Services grid */
+  .services-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+  
+  /* Gallery grid */
+  .gallery-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+  
+  /* Typography */
+  .section-title {
+    font-size: 3rem;
+    line-height: 1;
+  }
+  
+  /* Spacing */
+  .section-padding {
+    padding: 5rem 0;
+  }
+}
+
+/* Large desktop improvements */
+@media (min-width: 1440px) {
+  .container {
+    max-width: 1400px;
+  }
+  
+  .hero-grid {
+    gap: 3rem;
+  }
+  
+  .services-grid {
+    gap: 3rem;
+  }
+  
+  .gallery-grid {
+    gap: 3rem;
+  }
+  
+  .section-padding {
+    padding: 6rem 0;
+  }
+}
+
+/* Touch device improvements */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch devices */
+  .hover-lift:hover {
+    transform: none;
+  }
+  
+  .hover-scale:hover {
+    transform: none;
+  }
+  
+  .hover-glow:hover {
+    box-shadow: none;
+  }
+  
+  /* Increase touch targets */
+  .btn-primary {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .nav-link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .carousel-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Gallery touch improvements */
+  .gallery-item {
+    cursor: pointer;
+  }
+  
+  .gallery-item:active {
+    transform: scale(0.95);
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Ensure crisp images on retina displays */
+  .hero-image,
+  .gallery-image,
+  .tutor-image {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .animate-fade-in-up,
+  .animate-fade-in-left,
+  .animate-fade-in-right,
+  .animate-scale-in,
+  .animate-bounce-in,
+  .animate-float,
+  .animate-glow,
+  .animate-shimmer,
+  .animate-gradient {
+    animation: none !important;
+  }
+}
+
+/* Dark mode specific responsive adjustments */
+@media (prefers-color-scheme: dark) {
+  .dark .gallery-item:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark .service-card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Print styles */
+@media print {
+  .header,
+  .footer,
+  .carousel-buttons,
+  .photo-modal,
+  .whatsapp-widget {
+    display: none !important;
+  }
+  
+  .section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .section-title {
+    color: #000 !important;
+  }
+  
+  .section-subtitle {
+    color: #333 !important;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 640px) and (orientation: landscape) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .hero-slider {
+    aspect-ratio: 21/9;
+    min-height: 150px;
+  }
+  
+  .section-padding {
+    padding: 1.5rem 0;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-contrast: high) {
+  .btn-primary {
+    border: 2px solid currentColor;
+  }
+  
+  .nav-link {
+    border-bottom: 2px solid transparent;
+  }
+  
+  .nav-link:hover,
+  .nav-link:focus {
+    border-bottom-color: currentColor;
+  }
+}
+
+/* Focus improvements for keyboard navigation */
+.focus-visible:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  top: 6px;
+}

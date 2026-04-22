@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار المساعد الذكي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+        }
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+        }
+        .bot-message {
+            background: #f1f5f9;
+            color: #1e293b;
+            margin-right: auto;
+        }
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            color: #64748b;
+            font-style: italic;
+        }
+        .typing-dots {
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #64748b;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        .typing-dots:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto p-4 max-w-4xl">
+        <div class="bg-white rounded-lg shadow-lg">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-t-lg">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-xl">
+                        🤖
+                    </div>
+                    <div class="ml-3">
+                        <h1 class="text-lg font-bold">المساعد الذكي للدراسة</h1>
+                        <p class="text-sm opacity-90">اختبار الوظائف</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-container p-4" id="chatContainer">
+                <div class="message bot-message">
+                    <p>مرحباً! أنا المساعد الذكي لأكاديمية الشرق. كيف يمكنني مساعدتك في دراستك؟</p>
+                    <div class="text-xs text-gray-500 mt-2">الآن</div>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator px-4 pb-2" id="typingIndicator">
+                <span>المساعد يكتب</span>
+                <div class="typing-dots"></div>
+                <div class="typing-dots"></div>
+                <div class="typing-dots"></div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex space-x-2">
+                    <input
+                        type="text"
+                        id="messageInput"
+                        placeholder="اكتب رسالتك هنا..."
+                        class="flex-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        onkeypress="handleKeyPress(event)"
+                    />
+                    <button
+                        onclick="sendMessage()"
+                        id="sendButton"
+                        class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300"
+                    >
+                        📤 إرسال
+                    </button>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <button onclick="sendQuickMessage('مرحبا')" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm hover:bg-gray-300">مرحبا</button>
+                    <button onclick="sendQuickMessage('شرح درس الرياضيات')" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm hover:bg-gray-300">شرح الرياضيات</button>
+                    <button onclick="sendQuickMessage('تلخيص العلوم')" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm hover:bg-gray-300">تلخيص العلوم</button>
+                    <button onclick="sendQuickMessage('مساعدة')" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm hover:bg-gray-300">مساعدة</button>
+                    <button onclick="sendQuickMessage('شكرا')" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm hover:bg-gray-300">شكرا</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock AI responses
+        const getMockAIResponse = (message, subject = 'عام') => {
+            const responses = {
+                'مرحبا': {
+                    reply: `مرحباً! أنا المساعد الذكي لأكاديمية الشرق. كيف يمكنني مساعدتك في دراستك اليوم؟`,
+                    videoLinks: []
+                },
+                'شرح': {
+                    reply: `أهلاً! سأقوم بشرح الموضوع لك بطريقة مبسطة. ${subject !== 'عام' ? `في مادة ${subject}:` : ''}\n\nيمكنك طرح سؤال محدد وسأقوم بشرحه لك خطوة بخطوة.`,
+                    videoLinks: ['https://www.youtube.com/watch?v=example1']
+                },
+                'تلخيص': {
+                    reply: `سأقوم بتلخيص الموضوع لك في نقاط واضحة ومفهومة. ${subject !== 'عام' ? `في مادة ${subject}:` : ''}\n\nيرجى تحديد الموضوع الذي تريد تلخيصه.`,
+                    videoLinks: []
+                },
+                'مساعدة': {
+                    reply: `أنا هنا لمساعدتك في دراستك! يمكنني:\n• شرح الدروس\n• تلخيص المواد\n• اقتراح فيديوهات تعليمية\n• الإجابة على الأسئلة\n\nما الذي تحتاج مساعدة فيه؟`,
+                    videoLinks: []
+                },
+                'شكرا': {
+                    reply: `العفو! أنا سعيد لمساعدتك. إذا كان لديك أي أسئلة أخرى، فلا تتردد في سؤالي. أنا هنا لمساعدتك في دراستك! 😊`,
+                    videoLinks: []
+                },
+                'رياضيات': {
+                    reply: `أهلاً! سأساعدك في الرياضيات. يمكنني شرح:\n• الجبر والمعادلات\n• الهندسة\n• الإحصاء والاحتمالات\n• التفاضل والتكامل\n\nما هو الموضوع الذي تريد شرحه؟`,
+                    videoLinks: ['https://www.youtube.com/watch?v=math1', 'https://www.youtube.com/watch?v=math2']
+                },
+                'علوم': {
+                    reply: `أهلاً! سأساعدك في العلوم. يمكنني شرح:\n• الفيزياء\n• الكيمياء\n• الأحياء\n• علوم الأرض\n\nما هو الموضوع الذي تريد شرحه؟`,
+                    videoLinks: ['https://www.youtube.com/watch?v=science1']
+                },
+                'default': {
+                    reply: `شكراً لسؤالك! ${subject !== 'عام' ? `في مادة ${subject}:` : ''}\n\nأنا المساعد الذكي لأكاديمية الشرق. يمكنني مساعدتك في:\n• شرح الدروس بطريقة مبسطة\n• تلخيص المواد في نقاط واضحة\n• اقتراح فيديوهات تعليمية مفيدة\n• الإجابة على الأسئلة الأكاديمية\n• تقديم نصائح دراسية\n\nما الذي تريد المساعدة فيه؟`,
+                    videoLinks: ['https://www.youtube.com/watch?v=example2']
+                }
+            };
+
+            const lowerMessage = message.toLowerCase();
+            
+            if (lowerMessage.includes('مرحبا') || lowerMessage.includes('hello') || lowerMessage.includes('أهلا')) {
+                return responses['مرحبا'];
+            } else if (lowerMessage.includes('شرح') || lowerMessage.includes('explain')) {
+                return responses['شرح'];
+            } else if (lowerMessage.includes('تلخيص') || lowerMessage.includes('summary')) {
+                return responses['تلخيص'];
+            } else if (lowerMessage.includes('مساعدة') || lowerMessage.includes('help')) {
+                return responses['مساعدة'];
+            } else if (lowerMessage.includes('شكرا') || lowerMessage.includes('شكراً')) {
+                return responses['شكرا'];
+            } else if (lowerMessage.includes('رياضيات') || lowerMessage.includes('math')) {
+                return responses['رياضيات'];
+            } else if (lowerMessage.includes('علوم') || lowerMessage.includes('science')) {
+                return responses['علوم'];
+            } else {
+                return responses['default'];
+            }
+        };
+
+        function addMessage(text, isUser = false) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            const messageText = document.createElement('p');
+            messageText.textContent = text;
+            messageDiv.appendChild(messageText);
+            
+            const timestamp = document.createElement('div');
+            timestamp.className = 'text-xs text-gray-500 mt-2';
+            timestamp.textContent = new Date().toLocaleTimeString('ar-SA');
+            messageDiv.appendChild(timestamp);
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showTyping() {
+            document.getElementById('typingIndicator').style.display = 'flex';
+        }
+
+        function hideTyping() {
+            document.getElementById('typingIndicator').style.display = 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addMessage(message, true);
+            input.value = '';
+            
+            // Show typing indicator
+            showTyping();
+            
+            // Simulate AI response delay
+            setTimeout(() => {
+                hideTyping();
+                const response = getMockAIResponse(message);
+                addMessage(response.reply);
+                
+                // Add video links if available
+                if (response.videoLinks && response.videoLinks.length > 0) {
+                    const videoDiv = document.createElement('div');
+                    videoDiv.className = 'message bot-message mt-2';
+                    videoDiv.innerHTML = `
+                        <p class="font-medium mb-2">📺 فيديوهات تعليمية مقترحة:</p>
+                        ${response.videoLinks.map(link => 
+                            `<a href="${link}" target="_blank" class="block text-blue-600 hover:underline text-sm">🎥 ${link}</a>`
+                        ).join('')}
+                    `;
+                    document.getElementById('chatContainer').appendChild(videoDiv);
+                }
+            }, 1000 + Math.random() * 2000);
+        }
+
+        function sendQuickMessage(message) {
+            document.getElementById('messageInput').value = message;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Focus input on load
+        document.getElementById('messageInput').focus();
+    </script>
+</body>
+</html>

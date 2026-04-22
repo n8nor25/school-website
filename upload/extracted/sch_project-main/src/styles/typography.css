@@ -1,0 +1,409 @@
+/* Typography Improvements */
+
+/* Font loading optimization */
+@font-face {
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/cairo/v28/SLXGc1nY6HkvangtZmpQdkhzfH5lkSs2SgRjCAGMQ1z0hOA.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB1D-FB4F;
+}
+
+@font-face {
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/cairo/v28/SLXGc1nY6HkvangtZmpQdkhzfH5lkSs2SgRjCAGMQ1z0hOA.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB1D-FB4F;
+}
+
+@font-face {
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/cairo/v28/SLXGc1nY6HkvangtZmpQdkhzfH5lkSs2SgRjCAGMQ1z0hOA.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB1D-FB4F;
+}
+
+/* Base typography */
+body {
+  font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-feature-settings: 'liga' 1, 'kern' 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+  color: #1f2937;
+}
+
+.dark body {
+  color: #f9fafb;
+}
+
+/* Heading styles */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: #111827;
+  margin-bottom: 0.5em;
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: #f9fafb;
+}
+
+h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+h3 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+h4 {
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+h5 {
+  font-size: clamp(1.125rem, 2vw, 1.25rem);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+h6 {
+  font-size: clamp(1rem, 1.5vw, 1.125rem);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* Paragraph styles */
+p {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  line-height: 1.7;
+  margin-bottom: 1em;
+  color: #4b5563;
+}
+
+.dark p {
+  color: #d1d5db;
+}
+
+/* Lead paragraph */
+.lead {
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  line-height: 1.6;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.dark .lead {
+  color: #9ca3af;
+}
+
+/* Small text */
+small, .small {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.dark small, .dark .small {
+  color: #9ca3af;
+}
+
+/* Link styles */
+a {
+  color: #3b82f6;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.dark a {
+  color: #60a5fa;
+}
+
+.dark a:hover {
+  color: #93c5fd;
+}
+
+/* Button text */
+.btn {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.025em;
+  text-transform: none;
+  line-height: 1.5;
+}
+
+.btn-lg {
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.btn-sm {
+  font-size: 0.75rem;
+  padding: 0.5rem 1rem;
+}
+
+/* Navigation text */
+.nav-link {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.025em;
+  line-height: 1.5;
+}
+
+/* Card text */
+.card-title {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+}
+
+.card-text {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.dark .card-text {
+  color: #9ca3af;
+}
+
+/* Form text */
+.form-label {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+  color: #374151;
+}
+
+.dark .form-label {
+  color: #d1d5db;
+}
+
+.form-control {
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* List styles */
+ul, ol {
+  margin-bottom: 1rem;
+  padding-right: 1.5rem;
+}
+
+li {
+  margin-bottom: 0.25rem;
+  line-height: 1.6;
+}
+
+/* Blockquote */
+blockquote {
+  font-family: 'Cairo', sans-serif;
+  font-style: italic;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  border-right: 4px solid #3b82f6;
+  background-color: #f8fafc;
+  color: #475569;
+}
+
+.dark blockquote {
+  background-color: #1e293b;
+  color: #cbd5e1;
+  border-right-color: #60a5fa;
+}
+
+/* Code */
+code {
+  font-family: 'Fira Code', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.875em;
+  background-color: #f1f5f9;
+  color: #e11d48;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.dark code {
+  background-color: #334155;
+  color: #f87171;
+}
+
+pre {
+  font-family: 'Fira Code', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  background-color: #f8fafc;
+  color: #334155;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.dark pre {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+
+/* Text utilities */
+.text-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dark .text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive typography */
+@media (max-width: 640px) {
+  h1 {
+    font-size: 2rem;
+    line-height: 1.1;
+  }
+  
+  h2 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+  
+  p {
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+  
+  .lead {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+}
+
+@media (min-width: 1024px) {
+  h1 {
+    font-size: 3.5rem;
+    line-height: 1.1;
+  }
+  
+  h2 {
+    font-size: 2.5rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 2rem;
+    line-height: 1.3;
+  }
+  
+  p {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  
+  .lead {
+    font-size: 1.25rem;
+    line-height: 1.6;
+  }
+}
+
+/* Arabic text specific improvements */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="rtl"] ul, [dir="rtl"] ol {
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+[dir="rtl"] blockquote {
+  border-right: 4px solid #3b82f6;
+  border-left: none;
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+/* Line height improvements for Arabic */
+[lang="ar"] {
+  line-height: 1.8;
+}
+
+[lang="ar"] h1, [lang="ar"] h2, [lang="ar"] h3, [lang="ar"] h4, [lang="ar"] h5, [lang="ar"] h6 {
+  line-height: 1.4;
+}
+
+/* Improved readability */
+.readable {
+  max-width: 65ch;
+  margin: 0 auto;
+}
+
+.readable-wide {
+  max-width: 75ch;
+  margin: 0 auto;
+}
+
+/* Focus styles for accessibility */
+a:focus,
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Selection styles */
+::selection {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.dark ::selection {
+  background-color: #60a5fa;
+  color: #1f2937;
+}
