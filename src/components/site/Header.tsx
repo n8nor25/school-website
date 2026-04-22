@@ -8,6 +8,7 @@ interface HeaderProps {
   onAdminClick: () => void;
   isLoggedIn: boolean;
   onLogout: () => void;
+  onStudentLifeClick: () => void;
 }
 
 const navLinks = [
@@ -15,6 +16,7 @@ const navLinks = [
   { label: 'عن المدرسة', href: '#about' },
   { label: 'البرامج التعليمية', href: '#departments' },
   { label: 'جدول الحصص', href: '#schedule-section' },
+  { label: 'الحياة الطلابية', href: 'student-life', isStudentLife: true },
   { label: 'اتصل بنا', href: '#contact' },
 ];
 
@@ -24,7 +26,7 @@ function getInitialDarkMode(): boolean {
   return savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
 }
 
-export default function Header({ onAdminClick, isLoggedIn, onLogout }: HeaderProps) {
+export default function Header({ onAdminClick, isLoggedIn, onLogout, onStudentLifeClick }: HeaderProps) {
   const [isDark, setIsDark] = useState(getInitialDarkMode);
   const [currentTime, setCurrentTime] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -167,12 +169,21 @@ export default function Header({ onAdminClick, isLoggedIn, onLogout }: HeaderPro
             <ul className="hidden md:flex items-center gap-1">
               {navLinks.map((link) => (
                 <li key={link.href}>
-                  <a
-                    href={link.href}
-                    className="block px-4 py-2 text-white hover:bg-red-700 dark:hover:bg-red-800 rounded transition-colors text-sm font-medium"
-                  >
-                    {link.label}
-                  </a>
+                  {link.isStudentLife ? (
+                    <button
+                      onClick={onStudentLifeClick}
+                      className="block px-4 py-2 text-white hover:bg-red-700 dark:hover:bg-red-800 rounded transition-colors text-sm font-bold bg-white/10"
+                    >
+                      🎓 {link.label}
+                    </button>
+                  ) : (
+                    <a
+                      href={link.href}
+                      className="block px-4 py-2 text-white hover:bg-red-700 dark:hover:bg-red-800 rounded transition-colors text-sm font-medium"
+                    >
+                      {link.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
@@ -200,13 +211,22 @@ export default function Header({ onAdminClick, isLoggedIn, onLogout }: HeaderPro
               <ul className="flex flex-col gap-1">
                 {navLinks.map((link) => (
                   <li key={link.href}>
-                    <a
-                      href={link.href}
-                      className="block px-4 py-2 text-white hover:bg-red-700 dark:hover:bg-red-800 rounded transition-colors text-sm font-medium"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {link.label}
-                    </a>
+                    {link.isStudentLife ? (
+                      <button
+                        onClick={() => { onStudentLifeClick(); setMobileMenuOpen(false); }}
+                        className="block w-full text-right px-4 py-2 text-white hover:bg-red-700 dark:hover:bg-red-800 rounded transition-colors text-sm font-bold bg-white/10"
+                      >
+                        🎓 {link.label}
+                      </button>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="block px-4 py-2 text-white hover:bg-red-700 dark:hover:bg-red-800 rounded transition-colors text-sm font-medium"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {link.label}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
