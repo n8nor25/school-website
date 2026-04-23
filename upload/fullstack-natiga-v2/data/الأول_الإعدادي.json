@@ -1,0 +1,68 @@
+{
+  "grade": "الأول الإعدادي",
+  "updatedAt": "2026-04-23T00:00:00.000Z",
+  "max": {
+    "arabic": 40,
+    "english": 30,
+    "social": 20,
+    "math": 30,
+    "science": 20,
+    "total": 140,
+    "religion": 20,
+    "art": 10,
+    "computer": 10
+  },
+  "min": {
+    "arabic": 20,
+    "english": 15,
+    "social": 10,
+    "math": 15,
+    "science": 10,
+    "total": 70,
+    "religion": 10,
+    "art": 5,
+    "computer": 5
+  },
+  "students": [
+    {
+      "seat": "71200",
+      "name": "ابانوب روماني منير عزمي",
+      "arabic": 28.5,
+      "english": 2,
+      "social": 3,
+      "math": 3,
+      "science": 2.5,
+      "total": 39,
+      "religion": 11,
+      "art": 5,
+      "computer": 5
+    },
+    {
+      "seat": "71206",
+      "name": "احمد سيد حامد محمود",
+      "arabic": 33,
+      "english": 13,
+      "social": 17,
+      "math": 14,
+      "science": 16,
+      "total": 93,
+      "religion": 13.5,
+      "art": 6,
+      "computer": 5
+    }
+  ],
+  "subjects": {
+    "added": [
+      "arabic",
+      "english",
+      "social",
+      "math",
+      "science"
+    ],
+    "notAdded": [
+      "religion",
+      "art",
+      "computer"
+    ]
+  }
+}

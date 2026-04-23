@@ -72,6 +72,8 @@ model ClassRoom {
   section     String    @default("أ") // أ، ب، ج
   academicYear String   @default("2024/2025")
   students    Student[]
+  materials   EducationalMaterial[]
+  homeworks   Homework[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -80,6 +82,8 @@ model Subject {
   id        String   @id @default(cuid())
   name      String   // e.g. "الرياضيات"
   grades    Grade[]
+  materials EducationalMaterial[]
+  homeworks Homework[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -152,4 +156,68 @@ model ParentMessage {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ===== أدوات المعلم =====
+
+model EducationalMaterial {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  fileType    String   // pdf, doc, video, image, other
+  fileUrl     String
+  fileName    String
+  fileSize    Int      @default(0) // bytes
+  subjectId   String?
+  subject     Subject? @relation(fields: [subjectId], references: [id])
+  classRoomId String?
+  classRoom   ClassRoom? @relation(fields: [classRoomId], references: [id])
+  notes       String?  // ملاحظات المعلم
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Homework {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  subjectId   String?
+  subject     Subject? @relation(fields: [subjectId], references: [id])
+  classRoomId String
+  classRoom   ClassRoom @relation(fields: [classRoomId], references: [id])
+  dueDate     String   // YYYY-MM-DD
+  attachments String?  // JSON string of file URLs
+  notes       String?
+  status      String   @default("نشط") // نشط، منتهي، مغلق
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ===== نظام النتائج =====
+
+model ExamResultGrade {
+  id        String   @id @default(cuid())
+  gradeName String   // e.g. "الأول الإعدادي"
+  updatedAt DateTime @default(now())
+  results   ExamResult[]
+}
+
+model ExamResult {
+  id            String   @id @default(cuid())
+  gradeId       String
+  grade         ExamResultGrade @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  seatNumber    String   // رقم الجلوس
+  studentName   String
+  arabic        Float    @default(0)
+  english       Float    @default(0)
+  social        Float    @default(0)
+  math          Float    @default(0)
+  science       Float    @default(0)
+  total         Float    @default(0)
+  religion      Float    @default(0)
+  art           Float    @default(0)
+  computer      Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

@@ -1,0 +1,17 @@
+{
+  "name": "natiga-school-v2",
+  "version": "2.0.0",
+  "description": "نظام نتائج مع PDF ورفع متعدد ودخول مدير",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "xlsx": "^0.18.5",
+    "cors": "^2.8.5",
+    "pdfkit": "^0.15.0"
+  }
+}

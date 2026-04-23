@@ -332,3 +332,220 @@ Stage Summary:
 - GradeManager component fully functional with CRUD, filtering, pagination, class summary, and bulk entry
 - Integrates with existing /api/grades, /api/students, /api/subjects, and /api/classrooms endpoints
 - Ready to be integrated into AdminDashboard tabs
+
+---
+Task ID: 3
+Agent: API Routes Builder (Materials, Homework, Exam Results)
+Task: Create API routes for educational materials, homework, and exam results
+
+Work Log:
+- Created /api/materials/route.ts - GET (list with filters: classRoomId, subjectId, fileType; include subject & classRoom relations; orderBy createdAt desc), POST (create with required: title, fileType, fileUrl, fileName; optional: description, fileSize, subjectId, classRoomId, notes; validates subject & classroom existence)
+- Created /api/materials/[id]/route.ts - PUT (update material with field validation), DELETE (delete material with existence check)
+- Created /api/homework/route.ts - GET (list with filters: classRoomId, subjectId, status; include subject & classRoom relations; orderBy dueDate desc), POST (create with required: title, description, classRoomId, dueDate; optional: subjectId, attachments, notes, status; validates classroom & subject existence)
+- Created /api/homework/[id]/route.ts - PUT (update homework with field validation), DELETE (delete homework with existence check)
+- Created /api/exam-results/route.ts - GET (list all ExamResultGrade entries with student counts via _count), POST (upload exam results: accepts gradeName + results array; upserts ExamResultGrade; deletes old results before creating new ones; creates all ExamResult entries)
+- Created /api/exam-results/[id]/route.ts - DELETE (delete ExamResultGrade and all its results via cascade)
+- Created /api/exam-results/query/route.ts - GET (query student result by seat number and grade; computes max scores per subject across all students in grade; determines pass/fail: total >= 50% of max AND all added subjects >= 50% AND all notAdded subjects >= 50%; added subjects: arabic, english, social, math, science; notAdded: religion, art, computer; returns detailed subject-level pass/fail breakdown)
+- All routes use Next.js 16 params: Promise<{ id: string }> pattern for dynamic routes
+- All routes use import { db } from '@/lib/db' for database client
+- All routes use NextResponse.json() for responses
+- Error messages in Arabic throughout
+- Proper error handling with try/catch, 400 for validation, 404 for not found, 201 for POST success
+- Regenerated Prisma client after schema was already in sync
+- All 7 route files pass ESLint with zero errors
+- Tested all endpoints: GET/POST for materials, homework, exam-results all return correct data; PUT/DELETE for [id] routes work correctly; query endpoint returns student data with pass/fail analysis
+
+Stage Summary:
+- 7 API route files created for materials, homework, and exam results management
+- Materials CRUD with subject/classroom relations and filtering
+- Homework CRUD with subject/classroom relations and filtering
+- Exam results upload with grade upsert and bulk student result creation
+- Student result query with comprehensive pass/fail calculation
+- Zero lint errors across all new files
+- All endpoints tested and verified working
+
+---
+Task ID: 4-c
+Agent: Results Manager Builder
+Task: Create ResultsManager component for admin panel
+
+Work Log:
+- Created /src/components/admin/ResultsManager.tsx - exam results management component for admin panel
+- Implemented 4 major sections:
+  1. Header with title, description, and action buttons (upload new results + import sample data)
+  2. Stats Cards Row (3 cards): total grades (GraduationCap), total students (Users), last update time (Clock)
+  3. Grades List Table: using shadcn/ui Table component with columns (#, grade name with icon, student count with badge, last updated, delete action)
+  4. Empty state with GraduationCap icon when no grades exist
+- Upload Dialog with 2 input modes:
+  - JSON paste mode: Textarea with placeholder showing expected JSON format, LTR direction for code
+  - File upload mode: Drag-and-drop style upload area with file input for JSON files
+  - Grade name input field (required)
+  - Mode toggle buttons (JSON paste vs file upload)
+  - Full JSON validation: checks for valid JSON, results array existence, required fields per entry
+  - Upload button with loading spinner
+- Sample Data Import: "استيراد بيانات تجريبية" button that imports 2 sample students for "الأول الإعدادي"
+- Delete Confirmation Dialog (AlertDialog): warns about cascading deletion of all student results
+- API Integration:
+  - GET /api/exam-results - list all ExamResultGrade entries with student counts
+  - POST /api/exam-results - upload exam results with gradeName and results array
+  - DELETE /api/exam-results/[id] - delete grade and all associated results
+- Features:
+  - Loading state with Loader2 spinner
+  - Error handling with toast notifications (sonner)
+  - Success messages include student count
+  - Dark mode support throughout
+  - Arabic RTL layout (dir="rtl")
+  - Responsive design (mobile-friendly grid layouts)
+  - Dark blue #2A374E theme consistent with other admin components
+  - File upload reads JSON and populates form fields
+  - Validates required fields before submission
+- Zero lint errors in the component
+
+Stage Summary:
+- ResultsManager component fully functional with upload, listing, sample import, and delete operations
+- Integrates with existing /api/exam-results endpoints
+- Ready to be integrated into AdminDashboard tabs
+
+---
+Task ID: 4-b
+Agent: Homework Manager Builder
+Task: Create HomeworkManager component for admin panel
+
+Work Log:
+- Created /src/components/admin/HomeworkManager.tsx - comprehensive homework management component
+- Implemented full CRUD operations via API endpoints (GET, POST, PUT, DELETE /api/homework)
+- Homework List Table with:
+  - Filter by classroom (dropdown populated from /api/classrooms)
+  - Filter by subject (dropdown populated from /api/subjects)
+  - Filter by status (dropdown: نشط، منتهي، مغلق)
+  - Table columns: #, العنوان, الفصل, المادة, تاريخ التسليم, الحالة, إجراءات
+  - Pagination (10 per page) with RTL-aware navigation arrows
+  - Status badges with color coding (نشط=green/CheckCircle, منتهي=red/AlertCircle, مغلق=gray/Clock)
+  - Overdue indication: due dates past today shown in red with "تأخر عن الموعد" text and CalendarDays icon
+  - Responsive: hides class and subject columns on smaller screens
+- Add Homework Dialog with form fields:
+  - عنوان الواجب (required), الوصف/textarea (required), الفصل/dropdown (required), المادة/dropdown (optional with "بدون مادة" option)
+  - تاريخ التسليم/date input with CalendarDays icon (required), الحالة/dropdown (default: نشط), ملاحظات/textarea (optional)
+  - Due date preview showing formatted date with overdue warning
+- Edit Homework Dialog (same form, pre-filled with existing homework data)
+- Delete Confirmation Dialog (AlertDialog) with homework title in message
+- API Integration:
+  - GET /api/homework with filters (classRoomId, subjectId, status)
+  - POST /api/homework - create new homework
+  - PUT /api/homework/[id] - update homework
+  - DELETE /api/homework/[id] - delete homework
+  - GET /api/classrooms for class dropdowns
+  - GET /api/subjects for subject dropdowns
+- Features:
+  - Loading states (Loader2 spinner) for all data fetching
+  - Error handling with toast notifications (sonner) in Arabic
+  - Dark mode support throughout
+  - Arabic RTL layout (dir="rtl")
+  - Responsive design (mobile-friendly grids, hidden columns on small screens)
+  - Dark blue #2A374E theme consistent with other admin components
+  - Overdue detection comparing dueDate with current date
+  - Date formatting with Arabic locale (ar-EG)
+  - Subject is optional ("بدون مادة" option in dropdown)
+- Zero lint errors in the component
+
+Stage Summary:
+- HomeworkManager component fully functional with CRUD, filtering, pagination, and overdue detection
+- Integrates with existing /api/homework, /api/classrooms, and /api/subjects endpoints
+- Ready to be integrated into AdminDashboard tabs
+
+---
+Task ID: 4-a
+Agent: Materials Manager Builder
+Task: Create MaterialsManager component for admin panel
+
+Work Log:
+- Created /src/components/admin/MaterialsManager.tsx - comprehensive educational materials management component
+- Implemented full CRUD operations via API endpoints (GET, POST, PUT, DELETE /api/materials)
+- Materials List Table with:
+  - Filter by classroom (dropdown populated from /api/classrooms)
+  - Filter by subject (dropdown populated from /api/subjects)
+  - Filter by file type (dropdown: PDF, مستند, فيديو, صورة, أخرى)
+  - Table columns: #, العنوان, نوع الملف, المادة, الفصل, حجم الملف, إجراءات
+  - File type badges with color coding (pdf=red/FileText, doc=blue/FileText, video=purple/FileVideo, image=green/FileImage, other=gray/File)
+  - Pagination (10 per page) with RTL-aware navigation arrows
+  - Download button per row (opens file URL in new tab)
+  - Responsive: hides file type, subject, class, and file size columns on smaller screens
+- Add Material Dialog with form fields:
+  - عنوان المادة (required), الوصف/textarea (optional), نوع الملف/dropdown (required: PDF, مستند, فيديو, صورة, أخرى)
+  - رابط الملف/URL input with Upload icon (required, LTR direction), اسم الملف (required, LTR direction)
+  - حجم الملف/number input in bytes with live formatted display (KB/MB)
+  - المادة/dropdown (optional with "بدون مادة" option), الفصل/dropdown (optional with "بدون فصل" option)
+  - ملاحظات/textarea (optional)
+  - File preview card showing type icon, filename, URL, and size badge
+- Edit Material Dialog (same form, pre-filled with existing material data)
+- Delete Confirmation Dialog (AlertDialog) with material title in message
+- API Integration:
+  - GET /api/materials with filters (classRoomId, subjectId, fileType)
+  - POST /api/materials - create new material
+  - PUT /api/materials/[id] - update material
+  - DELETE /api/materials/[id] - delete material
+  - GET /api/classrooms for class dropdowns
+  - GET /api/subjects for subject dropdowns
+- Features:
+  - Loading states (Loader2 spinner) for all data fetching
+  - Error handling with toast notifications (sonner) in Arabic
+  - Dark mode support throughout
+  - Arabic RTL layout (dir="rtl")
+  - Responsive design (mobile-friendly grids, hidden columns on small screens)
+  - Dark blue #2A374E theme consistent with other admin components
+  - File size formatting helper (bytes → KB/MB display)
+  - File type icons per category (FileText, FileVideo, FileImage, File)
+  - Download action per row opens file URL in new tab
+  - Empty state with BookOpen icon and helpful message
+- Zero lint errors in the component
+
+Stage Summary:
+- MaterialsManager component fully functional with CRUD, filtering, pagination, file type badges, and download actions
+- Integrates with existing /api/materials, /api/classrooms, and /api/subjects endpoints
+- Ready to be integrated into AdminDashboard tabs
+
+---
+Task ID: 5
+Agent: Results Page Builder
+Task: Create public-facing student results query page (ResultsPage.tsx)
+
+Work Log:
+- Created /src/components/site/ResultsPage.tsx - beautiful Arabic RTL student results query page
+- Implemented 5 major sections:
+  1. Sticky Header: back button + "نتائج الطلاب" title with GraduationCap icon in red circle, matching StudentLifePage header style (#2A374E background)
+  2. Search Section (Hero): gradient-bordered card with school logo (graduation cap in circle), title "نتائج الطلاب", subtitle "منصة لعرض نتائج الطلاب وتتبعها", grade dropdown (from /api/exam-results with student counts), seat number input with search icon, search button with gradient, error alerts in red
+  3. Results Display when result found:
+     - Student Info Card: gradient header with student name (large bold), grade, seat number, pass/fail badge (green ناجح / red راسب)
+     - Total Score Section: progress bar with color coding, max score reference
+     - Subjects Table: المادة/الدرجة/من/النسبة/الحالة columns, color-coded rows (green ≥85%, blue ≥70%, yellow ≥50%, red <50%), star icon for added-to-total subjects, total row in dark blue
+     - Non-Added Subjects: card grid for دين/فنية/كمبيوتر with individual progress bars and pass/fail badges
+  4. Statistics Section: 4 stat cards (total percentage in dark blue, average of added subjects, highest subject, passed subjects count) + detailed pass/fail breakdown (total, added subjects, not-added subjects with minimum thresholds)
+  5. Footer Note: "هذه النتائج إرشادية وللاستعلام الرسمي يرجى مراجعة إدارة المدرسة" in amber alert box
+- API Integration:
+  - GET /api/exam-results - fetches available grades for dropdown (with student counts)
+  - GET /api/exam-results/query?grade=GRADE&seat=SEAT - fetches student result with comprehensive pass/fail analysis
+- States handled:
+  - Empty state (before search): graduation cap icon with instructions
+  - Loading state: animated spinner with "جارٍ البحث عن النتيجة..."
+  - Error state: red alert box with dismiss button
+  - No results state: friendly message with retry button
+  - Results display: full detailed card with all sections
+- Features:
+  - 'use client' directive
+  - RTL Arabic layout (dir="rtl")
+  - School colors: #2A374E (dark blue), red-600 accent
+  - CSS transitions for animations (fade-in with translateY, smooth progress bars)
+  - Enter key support for search
+  - Reset button to clear and start new search
+  - Dark mode support throughout
+  - Responsive design (mobile-first, grid layouts adapt)
+  - Default export component with onBack prop
+  - Color coding: green ≥85%, blue ≥70%, yellow ≥50%, red <50%
+- Zero lint errors in the component
+- Dev server running and API endpoint /api/exam-results verified returning 200
+
+Stage Summary:
+- ResultsPage component fully functional with search, results display, statistics, and footer note
+- Integrates with /api/exam-results and /api/exam-results/query endpoints
+- Beautiful RTL Arabic design with school blue theme and color-coded performance indicators
+- All states handled (empty, loading, error, no results, results found)
