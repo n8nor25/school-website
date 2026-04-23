@@ -293,6 +293,20 @@ export default function MaterialsManager() {
     }
   }, [filterClass, filterSubject, filterFileType])
 
+  // Prevent browser from opening dropped files at document level
+  useEffect(() => {
+    const preventDefaults = (e: DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    document.addEventListener('dragover', preventDefaults)
+    document.addEventListener('drop', preventDefaults)
+    return () => {
+      document.removeEventListener('dragover', preventDefaults)
+      document.removeEventListener('drop', preventDefaults)
+    }
+  }, [])
+
   useEffect(() => {
     fetchClassrooms()
     fetchSubjects()
@@ -340,6 +354,7 @@ export default function MaterialsManager() {
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     setDragOver(false)
     const file = e.dataTransfer.files?.[0]
     if (file) {
@@ -349,10 +364,13 @@ export default function MaterialsManager() {
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     setDragOver(true)
   }
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     setDragOver(false)
   }
 

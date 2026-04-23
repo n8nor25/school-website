@@ -111,6 +111,7 @@ export default function ResultsManager() {
   const [inputMode, setInputMode] = useState<'json' | 'file'>('file')
   const [selectedFileName, setSelectedFileName] = useState('')
   const [fileReadSuccess, setFileReadSuccess] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -128,6 +129,20 @@ export default function ResultsManager() {
     }
   }
 
+  // Prevent browser from opening dropped files at document level
+  useEffect(() => {
+    const preventDefaults = (e: DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    document.addEventListener('dragover', preventDefaults)
+    document.addEventListener('drop', preventDefaults)
+    return () => {
+      document.removeEventListener('dragover', preventDefaults)
+      document.removeEventListener('drop', preventDefaults)
+    }
+  }, [])
+
   useEffect(() => {
     fetchGrades()
   }, [])
@@ -138,6 +153,7 @@ export default function ResultsManager() {
     setInputMode('file')
     setSelectedFileName('')
     setFileReadSuccess(false)
+    setDragOver(false)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -148,10 +164,29 @@ export default function ResultsManager() {
     setUploadDialogOpen(true)
   }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(true)
+  }
 
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      processFile(file)
+    }
+  }
+
+  const processFile = async (file: File) => {
     setSelectedFileName(file.name)
     setFileReadSuccess(false)
 
@@ -191,6 +226,16 @@ export default function ResultsManager() {
       toast.error('فشل في قراءة الملف. تأكد من أنه ملف JSON صالح')
     }
 
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    await processFile(file)
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -540,7 +585,14 @@ export default function ResultsManager() {
             {inputMode === 'file' ? (
               <div className="space-y-3">
                 <div
-                  className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-[#2A374E]/50 dark:hover:border-blue-400/50 transition-colors cursor-pointer"
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer ${
+                    dragOver
+                      ? 'border-[#2A374E] bg-[#2A374E]/5 dark:bg-[#2A374E]/10 scale-[1.02]'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-[#2A374E]/50 dark:hover:border-blue-400/50'
+                  }`}
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <input
@@ -550,9 +602,13 @@ export default function ResultsManager() {
                     className="hidden"
                     onChange={handleFileUpload}
                   />
-                  <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600 dark:text-gray-300 font-medium mb-1">ارفع ملف JSON</p>
-                  <p className="text-gray-400 text-sm mb-4">اسحب الملف هنا أو اضغط للاختيار</p>
+                  <FileSpreadsheet className={`w-12 h-12 mx-auto mb-3 transition-colors ${dragOver ? 'text-[#2A374E] dark:text-blue-300' : 'text-gray-400'}`} />
+                  <p className="text-gray-600 dark:text-gray-300 font-medium mb-1">
+                    {dragOver ? 'أفلت الملف هنا' : 'ارفع ملف JSON'}
+                  </p>
+                  <p className="text-gray-400 text-sm mb-4">
+                    {dragOver ? 'سيتم قراءة الملف تلقائياً' : 'اسحب الملف هنا أو اضغط للاختيار'}
+                  </p>
                   <Button
                     type="button"
                     variant="outline"
