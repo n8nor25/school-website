@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     }
 
     // Verify subject exists if provided
-    if (subjectId) {
+    if (subjectId && subjectId !== 'none') {
       const subject = await db.subject.findUnique({
         where: { id: subjectId },
       })
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     }
 
     // Verify classroom exists if provided
-    if (classRoomId) {
+    if (classRoomId && classRoomId !== 'none') {
       const classroom = await db.classRoom.findUnique({
         where: { id: classRoomId },
       })
@@ -104,8 +104,8 @@ export async function POST(request: Request) {
         fileName,
         description: description || null,
         fileSize: fileSize || 0,
-        subjectId: subjectId || null,
-        classRoomId: classRoomId || null,
+        subjectId: (subjectId && subjectId !== 'none') ? subjectId : null,
+        classRoomId: (classRoomId && classRoomId !== 'none') ? classRoomId : null,
         notes: notes || null,
       },
       include: {

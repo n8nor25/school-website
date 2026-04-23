@@ -44,6 +44,7 @@ import {
   Plus,
   AlertCircle,
   CheckCircle,
+  FileUp,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -107,7 +108,9 @@ export default function ResultsManager() {
   // Upload form state
   const [gradeName, setGradeName] = useState('')
   const [jsonData, setJsonData] = useState('')
-  const [inputMode, setInputMode] = useState<'json' | 'file'>('json')
+  const [inputMode, setInputMode] = useState<'json' | 'file'>('file')
+  const [selectedFileName, setSelectedFileName] = useState('')
+  const [fileReadSuccess, setFileReadSuccess] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -132,7 +135,12 @@ export default function ResultsManager() {
   const resetUploadForm = () => {
     setGradeName('')
     setJsonData('')
-    setInputMode('json')
+    setInputMode('file')
+    setSelectedFileName('')
+    setFileReadSuccess(false)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const openUploadDialog = () => {
@@ -144,23 +152,41 @@ export default function ResultsManager() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    setSelectedFileName(file.name)
+    setFileReadSuccess(false)
+
     try {
       const text = await file.text()
-      const parsed = JSON.parse(text)
+      let parsed: unknown
 
-      if (parsed.gradeName) {
-        setGradeName(parsed.gradeName)
+      try {
+        parsed = JSON.parse(text)
+      } catch {
+        toast.error('فشل في تحليل الملف. تأكد من أنه ملف JSON صالح')
+        return
       }
-      if (parsed.results && Array.isArray(parsed.results)) {
-        setJsonData(JSON.stringify(parsed, null, 2))
+
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && 'gradeName' in (parsed as Record<string, unknown>)) {
+        const obj = parsed as { gradeName?: string; results?: unknown[] }
+        setGradeName(obj.gradeName || '')
+        if (obj.results && Array.isArray(obj.results)) {
+          setJsonData(JSON.stringify(parsed, null, 2))
+          setFileReadSuccess(true)
+          toast.success(`تم قراءة الملف بنجاح - ${obj.results.length} طالب`)
+        } else {
+          setJsonData(text)
+          toast.error('الملف لا يحتوي على مصفوفة results صالحة')
+        }
       } else if (Array.isArray(parsed)) {
         setJsonData(JSON.stringify({ gradeName: gradeName || '', results: parsed }, null, 2))
+        setFileReadSuccess(true)
+        toast.success(`تم قراءة الملف بنجاح - ${parsed.length} طالب`)
       } else {
         setJsonData(text)
+        toast.error('صيغة الملف غير صحيحة')
       }
 
-      setInputMode('json')
-      toast.success('تم قراءة الملف بنجاح')
+      setInputMode('json') // Switch to JSON view to show the parsed data
     } catch {
       toast.error('فشل في قراءة الملف. تأكد من أنه ملف JSON صالح')
     }
@@ -178,7 +204,7 @@ export default function ResultsManager() {
     }
 
     if (!jsonData.trim()) {
-      toast.error('يرجى إدخال بيانات النتائج')
+      toast.error('يرجى إدخال بيانات النتائج أو رفع ملف JSON')
       return
     }
 
@@ -237,7 +263,8 @@ export default function ResultsManager() {
       } else {
         toast.error(data.error || 'حدث خطأ في رفع النتائج')
       }
-    } catch {
+    } catch (error) {
+      console.error('Upload error:', error)
       toast.error('حدث خطأ في الاتصال بالخادم')
     } finally {
       setUploading(false)
@@ -481,6 +508,20 @@ export default function ResultsManager() {
               <div className="flex gap-2">
                 <Button
                   type="button"
+                  variant={inputMode === 'file' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setInputMode('file')}
+                  className={
+                    inputMode === 'file'
+                      ? 'bg-[#2A374E] hover:bg-[#1e2a3d] text-white'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }
+                >
+                  <FileUp className="w-4 h-4 ml-1" />
+                  رفع ملف JSON
+                </Button>
+                <Button
+                  type="button"
                   variant={inputMode === 'json' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setInputMode('json')}
@@ -492,24 +533,71 @@ export default function ResultsManager() {
                 >
                   لصق JSON
                 </Button>
-                <Button
-                  type="button"
-                  variant={inputMode === 'file' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setInputMode('file')}
-                  className={
-                    inputMode === 'file'
-                      ? 'bg-[#2A374E] hover:bg-[#1e2a3d] text-white'
-                      : 'border-gray-300 dark:border-gray-600'
-                  }
-                >
-                  رفع ملف
-                </Button>
               </div>
             </div>
 
-            {/* JSON Input */}
-            {inputMode === 'json' ? (
+            {/* File Upload Mode */}
+            {inputMode === 'file' ? (
+              <div className="space-y-3">
+                <div
+                  className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-[#2A374E]/50 dark:hover:border-blue-400/50 transition-colors cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                  <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600 dark:text-gray-300 font-medium mb-1">ارفع ملف JSON</p>
+                  <p className="text-gray-400 text-sm mb-4">اسحب الملف هنا أو اضغط للاختيار</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      fileInputRef.current?.click()
+                    }}
+                    className="gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    اختيار ملف
+                  </Button>
+                </div>
+                {fileReadSuccess && (
+                  <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span className="text-sm text-emerald-700 dark:text-emerald-300">
+                      تم قراءة الملف بنجاح {selectedFileName && `- ${selectedFileName}`}
+                    </span>
+                  </div>
+                )}
+                {jsonData && inputMode === 'file' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-medium text-gray-500">معاينة البيانات:</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-7"
+                        onClick={() => setInputMode('json')}
+                      >
+                        تعديل البيانات
+                      </Button>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700">
+                      <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap break-words font-mono" dir="ltr">
+                        {jsonData.length > 2000 ? jsonData.substring(0, 2000) + '\n... (تم اقتطاع المعاينة)' : jsonData}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* JSON Paste Mode */
               <div className="space-y-2">
                 <Label htmlFor="json-data" className="font-medium">
                   بيانات JSON <span className="text-red-500">*</span>
@@ -545,41 +633,11 @@ export default function ResultsManager() {
                   الصيغة المطلوبة: كائن JSON يحتوي على gradeName ومصفوفة results
                 </p>
               </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-[#2A374E]/50 dark:hover:border-blue-400/50 transition-colors">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".json"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                  />
-                  <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600 dark:text-gray-300 font-medium mb-1">ارفع ملف JSON</p>
-                  <p className="text-gray-400 text-sm mb-4">اسحب الملف هنا أو اضغط للاختيار</p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    اختيار ملف
-                  </Button>
-                </div>
-                {jsonData && (
-                  <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span className="text-sm text-emerald-700 dark:text-emerald-300">تم قراءة الملف بنجاح</span>
-                  </div>
-                )}
-              </div>
             )}
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setUploadDialogOpen(false)} disabled={uploading}>
               إلغاء
             </Button>
             <Button
@@ -588,11 +646,16 @@ export default function ResultsManager() {
               className="bg-[#2A374E] hover:bg-[#1e2a3d] text-white gap-2"
             >
               {uploading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  جارٍ الرفع...
+                </>
               ) : (
-                <Upload className="w-4 h-4" />
+                <>
+                  <Upload className="w-4 h-4" />
+                  رفع النتائج
+                </>
               )}
-              {uploading ? 'جارٍ الرفع...' : 'رفع النتائج'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -55,6 +55,9 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  X,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -146,6 +149,14 @@ const FILE_TYPE_STYLES: Record<string, { bgClass: string; textClass: string; ico
   },
 }
 
+const ACCEPTED_TYPES: Record<string, string> = {
+  pdf: '.pdf',
+  doc: '.doc,.docx,.ppt,.pptx,.xls,.xlsx',
+  video: '.mp4,.webm,.avi,.mov',
+  image: '.jpg,.jpeg,.png,.gif,.webp,.svg',
+  other: '*',
+}
+
 const defaultFormData: MaterialFormData = {
   title: '',
   description: '',
@@ -190,6 +201,15 @@ function getFileTypeBadge(fileType: string) {
   )
 }
 
+function detectFileType(fileName: string): string {
+  const ext = fileName.split('.').pop()?.toLowerCase() || ''
+  if (ext === 'pdf') return 'pdf'
+  if (['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext)) return 'doc'
+  if (['mp4', 'webm', 'avi', 'mov'].includes(ext)) return 'video'
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return 'image'
+  return 'other'
+}
+
 // ===== Component =====
 
 export default function MaterialsManager() {
@@ -213,6 +233,13 @@ export default function MaterialsManager() {
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null)
   const [formData, setFormData] = useState<MaterialFormData>(defaultFormData)
   const [saving, setSaving] = useState(false)
+
+  // ===== File Upload State =====
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<string>('')
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [dragOver, setDragOver] = useState(false)
 
   // ===== Delete Dialog =====
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -282,11 +309,97 @@ export default function MaterialsManager() {
     currentPage * ITEMS_PER_PAGE
   )
 
+  // ===== File Upload Handler =====
+
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file)
+    const detectedType = detectFileType(file.name)
+    setFormData((prev) => ({
+      ...prev,
+      fileType: detectedType,
+      fileName: file.name,
+      fileSize: String(file.size),
+    }))
+    // Auto-fill title if empty
+    if (!formData.title.trim()) {
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
+      setFormData((prev) => ({ ...prev, title: nameWithoutExt }))
+    }
+  }
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleFileSelect(file)
+    }
+    // Reset input so same file can be re-selected
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      handleFileSelect(file)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(true)
+  }
+
+  const handleDragLeave = () => {
+    setDragOver(false)
+  }
+
+  const uploadFile = async (): Promise<{ url: string; fileName: string; fileSize: number } | null> => {
+    if (!selectedFile) return null
+
+    setUploading(true)
+    setUploadProgress('جارٍ رفع الملف...')
+
+    try {
+      const uploadFormData = new FormData()
+      uploadFormData.append('file', selectedFile)
+      uploadFormData.append('subfolder', 'materials')
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        toast.error(data.error || 'فشل في رفع الملف')
+        return null
+      }
+
+      setUploadProgress('تم رفع الملف بنجاح')
+      return {
+        url: data.url,
+        fileName: data.fileName,
+        fileSize: data.fileSize,
+      }
+    } catch {
+      toast.error('حدث خطأ في رفع الملف')
+      return null
+    } finally {
+      setUploading(false)
+    }
+  }
+
   // ===== Handlers =====
 
   const openAddDialog = () => {
     setEditingMaterial(null)
     setFormData(defaultFormData)
+    setSelectedFile(null)
+    setUploadProgress('')
     setDialogOpen(true)
   }
 
@@ -303,6 +416,8 @@ export default function MaterialsManager() {
       classRoomId: material.classRoomId || '',
       notes: material.notes || '',
     })
+    setSelectedFile(null)
+    setUploadProgress('')
     setDialogOpen(true)
   }
 
@@ -315,26 +430,40 @@ export default function MaterialsManager() {
       toast.error('يرجى اختيار نوع الملف')
       return
     }
-    if (!formData.fileUrl.trim()) {
-      toast.error('يرجى إدخال رابط الملف')
-      return
-    }
-    if (!formData.fileName.trim()) {
-      toast.error('يرجى إدخال اسم الملف')
+
+    // Either a selected file or an existing fileUrl is required
+    if (!selectedFile && !formData.fileUrl.trim()) {
+      toast.error('يرجى اختيار ملف للرفع أو إدخال رابط الملف')
       return
     }
 
     setSaving(true)
     try {
+      let fileUrl = formData.fileUrl
+      let fileName = formData.fileName
+      let fileSize = formData.fileSize ? Number(formData.fileSize) : 0
+
+      // If a new file was selected, upload it first
+      if (selectedFile) {
+        const uploadResult = await uploadFile()
+        if (!uploadResult) {
+          setSaving(false)
+          return
+        }
+        fileUrl = uploadResult.url
+        fileName = uploadResult.fileName
+        fileSize = uploadResult.fileSize
+      }
+
       const payload = {
         title: formData.title.trim(),
         description: formData.description.trim() || null,
         fileType: formData.fileType,
-        fileUrl: formData.fileUrl.trim(),
-        fileName: formData.fileName.trim(),
-        fileSize: formData.fileSize ? Number(formData.fileSize) : 0,
-        subjectId: formData.subjectId || null,
-        classRoomId: formData.classRoomId || null,
+        fileUrl,
+        fileName,
+        fileSize,
+        subjectId: (formData.subjectId && formData.subjectId !== 'none') ? formData.subjectId : null,
+        classRoomId: (formData.classRoomId && formData.classRoomId !== 'none') ? formData.classRoomId : null,
         notes: formData.notes.trim() || null,
       }
 
@@ -686,7 +815,10 @@ export default function MaterialsManager() {
               </Label>
               <Select
                 value={formData.fileType}
-                onValueChange={(val) => setFormData((prev) => ({ ...prev, fileType: val }))}
+                onValueChange={(val) => {
+                  setFormData((prev) => ({ ...prev, fileType: val }))
+                  setSelectedFile(null)
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="اختر نوع الملف" />
@@ -704,49 +836,111 @@ export default function MaterialsManager() {
               </Select>
             </div>
 
-            {/* File URL & Name */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>
-                  <div className="flex items-center gap-1.5">
-                    <Upload className="w-3.5 h-3.5" />
-                    رابط الملف <span className="text-red-500">*</span>
-                  </div>
-                </Label>
-                <Input
-                  value={formData.fileUrl}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, fileUrl: e.target.value }))}
-                  placeholder="أدخل رابط الملف (URL)"
-                  dir="ltr"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>
-                  اسم الملف <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  value={formData.fileName}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, fileName: e.target.value }))}
-                  placeholder="مثال: كتاب الرياضيات.pdf"
-                  dir="ltr"
-                />
-              </div>
-            </div>
-
-            {/* File Size */}
+            {/* File Upload Area */}
             <div className="space-y-2">
-              <Label>حجم الملف (بالبايت)</Label>
+              <Label>
+                <div className="flex items-center gap-1.5">
+                  <Upload className="w-3.5 h-3.5" />
+                  رفع الملف <span className="text-red-500">*</span>
+                </div>
+              </Label>
+
+              {/* Drag & Drop Zone */}
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 cursor-pointer ${
+                  dragOver
+                    ? 'border-[#2A374E] bg-[#2A374E]/5 dark:bg-[#2A374E]/10'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-[#2A374E]/50 dark:hover:border-blue-400/50'
+                }`}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={ACCEPTED_TYPES[formData.fileType] || '*'}
+                  className="hidden"
+                  onChange={handleFileInputChange}
+                />
+
+                {selectedFile ? (
+                  <div className="space-y-3">
+                    <div className={`w-14 h-14 mx-auto rounded-xl flex items-center justify-center ${(FILE_TYPE_STYLES[formData.fileType] || FILE_TYPE_STYLES.other).bgClass}`}>
+                      {getFileTypeIcon(formData.fileType)}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800 dark:text-white">{selectedFile.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {formatFileSize(selectedFile.size)}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedFile(null)
+                        setFormData((prev) => ({ ...prev, fileName: '', fileSize: '', fileUrl: '' }))
+                      }}
+                    >
+                      <X className="w-4 h-4 ml-1" />
+                      إزالة الملف
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="w-14 h-14 mx-auto rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-600 dark:text-gray-300">
+                        اسحب الملف هنا أو اضغط للاختيار
+                      </p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        الحد الأقصى 50 ميجابايت
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload progress */}
+              {uploadProgress && (
+                <div className={`flex items-center gap-2 text-sm p-2 rounded-lg ${
+                  uploadProgress.includes('بنجاح')
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
+                    : 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                }`}>
+                  {uploadProgress.includes('بنجاح') ? (
+                    <CheckCircle className="w-4 h-4" />
+                  ) : (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  )}
+                  {uploadProgress}
+                </div>
+              )}
+
+              {/* Or enter URL manually */}
+              <div className="flex items-center gap-3 mt-2">
+                <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+                <span className="text-xs text-gray-400">أو أدخل رابط الملف يدوياً</span>
+                <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+              </div>
               <Input
-                type="number"
-                min="0"
-                value={formData.fileSize}
-                onChange={(e) => setFormData((prev) => ({ ...prev, fileSize: e.target.value }))}
-                placeholder="مثال: 1048576 (1 ميجابايت)"
+                value={formData.fileUrl}
+                onChange={(e) => setFormData((prev) => ({ ...prev, fileUrl: e.target.value }))}
+                placeholder="أدخل رابط الملف (URL)"
+                dir="ltr"
+                disabled={!!selectedFile}
               />
-              {formData.fileSize && Number(formData.fileSize) > 0 && (
-                <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                  الحجم: {formatFileSize(Number(formData.fileSize))}
+              {formData.fileUrl && !selectedFile && (
+                <p className="text-xs text-gray-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  سيتم استخدام الرابط المدخل بدلاً من رفع ملف جديد
                 </p>
               )}
             </div>
@@ -806,7 +1000,7 @@ export default function MaterialsManager() {
             </div>
 
             {/* File Preview */}
-            {formData.fileUrl && (
+            {(selectedFile || formData.fileUrl) && (
               <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${(FILE_TYPE_STYLES[formData.fileType] || FILE_TYPE_STYLES.other).bgClass}`}>
@@ -817,10 +1011,10 @@ export default function MaterialsManager() {
                       {formData.fileName || 'ملف بدون اسم'}
                     </p>
                     <p className="text-xs text-gray-400 truncate" dir="ltr">
-                      {formData.fileUrl}
+                      {selectedFile ? 'سيتم رفع ملف جديد' : formData.fileUrl}
                     </p>
                   </div>
-                  {formData.fileSize && Number(formData.fileSize) > 0 && (
+                  {(formData.fileSize && Number(formData.fileSize) > 0) && (
                     <Badge variant="outline" className="text-xs shrink-0">
                       {formatFileSize(Number(formData.fileSize))}
                     </Badge>
@@ -833,19 +1027,19 @@ export default function MaterialsManager() {
             <Button
               variant="outline"
               onClick={() => setDialogOpen(false)}
-              disabled={saving}
+              disabled={saving || uploading}
             >
               إلغاء
             </Button>
             <Button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || uploading}
               className="bg-[#2A374E] hover:bg-[#1e2a3d] text-white gap-2"
             >
-              {saving ? (
+              {saving || uploading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  جاري الحفظ...
+                  {uploading ? 'جارٍ رفع الملف...' : 'جاري الحفظ...'}
                 </>
               ) : (
                 <>

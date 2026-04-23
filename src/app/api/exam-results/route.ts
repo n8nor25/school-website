@@ -1,6 +1,9 @@
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
 
+// Increase body size limit for large result uploads
+export const runtime = 'nodejs'
+
 // GET /api/exam-results - List all ExamResultGrade entries with student counts
 export async function GET() {
   try {
@@ -43,11 +46,19 @@ export async function POST(request: Request) {
       )
     }
 
+    if (results.length === 0) {
+      return NextResponse.json(
+        { error: 'لا توجد نتائج للرفع' },
+        { status: 400 }
+      )
+    }
+
     // Validate each result has required fields
-    for (const result of results) {
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i]
       if (!result.seatNumber || !result.studentName) {
         return NextResponse.json(
-          { error: 'رقم الجلوس واسم الطالب مطلوبان لكل طالب' },
+          { error: `السطر ${i + 1}: رقم الجلوس واسم الطالب مطلوبان` },
           { status: 400 }
         )
       }

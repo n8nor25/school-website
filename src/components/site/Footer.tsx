@@ -2,6 +2,10 @@
 
 import { Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
 
+interface FooterProps {
+  onResultsClick?: () => void;
+}
+
 const quickLinks = [
   { label: 'الرئيسية', href: '/' },
   { label: 'عن المدرسة', href: '#about' },
@@ -10,16 +14,16 @@ const quickLinks = [
   { label: 'اتصل بنا', href: '#contact' },
 ];
 
-const eServices = [
-  { label: 'المكتبة الرقمية', href: '#' },
-  { label: 'جدول الحصص', href: '#schedule-section' },
-  { label: 'نتائج الطلاب', href: '#' },
-  { label: 'شكاوى ومقترحات', href: '#contact' },
-  { label: 'التسجيل الإلكتروني', href: '#' },
-];
-
-export default function Footer() {
+export default function Footer({ onResultsClick }: FooterProps) {
   const currentYear = new Date().getFullYear();
+
+  const eServices = [
+    { label: 'المكتبة الرقمية', href: '#', isResults: false },
+    { label: 'جدول الحصص', href: '#schedule-section', isResults: false },
+    { label: 'نتائج الطلاب', href: '#', isResults: true },
+    { label: 'شكاوى ومقترحات', href: '#contact', isResults: false },
+    { label: 'التسجيل الإلكتروني', href: '#', isResults: false },
+  ];
 
   return (
     <footer className="bg-[#2A374E] dark:bg-gray-950 text-white dark-transition">
@@ -52,7 +56,7 @@ export default function Footer() {
             <h3 className="text-xl font-bold mb-4">روابط سريعة</h3>
             <ul className="space-y-2">
               {quickLinks.map((link) => (
-                <li key={link.href}>
+                <li key={link.href + link.label}>
                   <a
                     href={link.href}
                     className="text-gray-300 dark:text-gray-400 hover:text-red-400 transition-colors text-sm flex items-center gap-2"
@@ -71,13 +75,23 @@ export default function Footer() {
             <ul className="space-y-2">
               {eServices.map((link) => (
                 <li key={link.label}>
-                  <a
-                    href={link.href}
-                    className="text-gray-300 dark:text-gray-400 hover:text-red-400 transition-colors text-sm flex items-center gap-2"
-                  >
-                    <span className="w-1.5 h-1.5 bg-red-600 rounded-full" />
-                    {link.label}
-                  </a>
+                  {link.isResults && onResultsClick ? (
+                    <button
+                      onClick={onResultsClick}
+                      className="text-gray-300 dark:text-gray-400 hover:text-red-400 transition-colors text-sm flex items-center gap-2"
+                    >
+                      <span className="w-1.5 h-1.5 bg-red-600 rounded-full" />
+                      {link.label}
+                    </button>
+                  ) : (
+                    <a
+                      href={link.href}
+                      className="text-gray-300 dark:text-gray-400 hover:text-red-400 transition-colors text-sm flex items-center gap-2"
+                    >
+                      <span className="w-1.5 h-1.5 bg-red-600 rounded-full" />
+                      {link.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

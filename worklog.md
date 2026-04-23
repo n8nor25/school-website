@@ -549,3 +549,39 @@ Stage Summary:
 - Integrates with /api/exam-results and /api/exam-results/query endpoints
 - Beautiful RTL Arabic design with school blue theme and color-coded performance indicators
 - All states handled (empty, loading, error, no results, results found)
+
+---
+Task ID: 6
+Agent: Main Orchestrator
+Task: Fix navigation, file upload, and link student results to homepage card
+
+Work Log:
+- Removed "نتائج الطلاب" from navbar in Header.tsx (matching how schedules was removed earlier)
+- Updated Header.tsx to remove onResultsClick prop and isResults logic from both desktop and mobile nav
+- Updated page.tsx to remove onResultsClick from Header component props
+- Created /api/upload/route.ts - file upload API that saves files to public/uploads/[subfolder]/ with unique filenames
+- Rewrote MaterialsManager.tsx with full file upload support:
+  - Drag-and-drop file upload zone with visual feedback
+  - File input for selecting files
+  - Auto-detection of file type from extension (pdf, doc, video, image, other)
+  - Auto-fill title from filename
+  - Upload progress indicator
+  - Fallback URL input for manual entry
+  - Fixed subjectId/classRoomId 'none' value conversion to null
+- Updated ResultsManager.tsx with improved file upload:
+  - Default mode changed to 'file' instead of 'json'
+  - Better file reading with preview of parsed data
+  - Shows student count after successful file read
+  - Edit button to switch to JSON view for modifications
+  - Fixed upload validation and error messages
+- Updated Footer.tsx to accept onResultsClick prop and make results link clickable
+- Fixed materials API routes to handle 'none' value for subjectId/classRoomId
+- Updated next.config.ts with serverActions bodySizeLimit for large uploads
+- Zero lint errors, dev server running successfully
+
+Stage Summary:
+- Student results removed from navbar, now accessible only through Services card and Footer
+- File upload fully functional with drag-and-drop in MaterialsManager
+- JSON file upload improved in ResultsManager with better UX
+- All 'none' value handling fixed across API routes
+- Footer supports onResultsClick for results link

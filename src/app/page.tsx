@@ -158,7 +158,6 @@ export default function Home() {
         isLoggedIn={!!admin}
         onLogout={handleAdminLogout}
         onStudentLifeClick={handleStudentLifeClick}
-        onResultsClick={handleResultsClick}
       />
       <main className="flex-1">
         <Hero />
