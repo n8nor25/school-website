@@ -3,6 +3,10 @@
 import { BookOpen, Calendar, BarChart3, MessageCircle, Puzzle, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+interface ServicesProps {
+  onResultsClick?: () => void;
+}
+
 const services = [
   {
     icon: BookOpen,
@@ -25,6 +29,7 @@ const services = [
     description: 'الاطلاع على النتائج والتقارير الأكاديمية للطلاب',
     action: 'عرض النتائج',
     href: '#',
+    isResults: true,
   },
   {
     icon: MessageCircle,
@@ -49,7 +54,7 @@ const services = [
   },
 ];
 
-export default function Services() {
+export default function Services({ onResultsClick }: ServicesProps) {
   const handleScheduleClick = () => {
     const el = document.getElementById('schedule-section');
     if (el) {
@@ -93,6 +98,13 @@ export default function Services() {
                 {service.isSchedule ? (
                   <Button
                     onClick={handleScheduleClick}
+                    className="bg-red-600 hover:bg-red-700 text-white hover:shadow-lg transition-all"
+                  >
+                    {service.action}
+                  </Button>
+                ) : service.isResults ? (
+                  <Button
+                    onClick={onResultsClick}
                     className="bg-red-600 hover:bg-red-700 text-white hover:shadow-lg transition-all"
                   >
                     {service.action}

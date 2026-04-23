@@ -16,6 +16,7 @@ import Footer from '@/components/site/Footer';
 import AdminLogin from '@/components/admin/AdminLogin';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import StudentLifePage from '@/components/site/StudentLifePage';
+import ResultsPage from '@/components/site/ResultsPage';
 
 interface AdminData {
   id: string;
@@ -26,6 +27,7 @@ interface AdminData {
 export default function Home() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showStudentLife, setShowStudentLife] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedMode = localStorage.getItem('darkMode');
@@ -80,11 +82,7 @@ export default function Home() {
   };
 
   const handleAdminClick = () => {
-    if (admin) {
-      setShowAdmin(true);
-    } else {
-      setShowAdmin(true);
-    }
+    setShowAdmin(true);
   };
 
   const handleStudentLifeClick = () => {
@@ -96,6 +94,21 @@ export default function Home() {
     setShowStudentLife(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleResultsClick = () => {
+    setShowResults(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackFromResults = () => {
+    setShowResults(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Results view
+  if (showResults && !showAdmin) {
+    return <ResultsPage onBack={handleBackFromResults} />;
+  }
 
   // Student Life view
   if (showStudentLife && !showAdmin) {
@@ -145,20 +158,21 @@ export default function Home() {
         isLoggedIn={!!admin}
         onLogout={handleAdminLogout}
         onStudentLifeClick={handleStudentLifeClick}
+        onResultsClick={handleResultsClick}
       />
       <main className="flex-1">
         <Hero />
         <About />
         <NewsAndEvents />
         <Departments />
-        <Services />
+        <Services onResultsClick={handleResultsClick} />
         <ScheduleSection />
         <PhotoGallery />
         <TutorsSwiper />
         <Testimonials />
         <Contact />
       </main>
-      <Footer />
+      <Footer onResultsClick={handleResultsClick} />
     </div>
   );
 }
