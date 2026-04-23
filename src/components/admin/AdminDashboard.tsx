@@ -18,6 +18,9 @@ import {
   ClipboardCheck,
   FileText,
   MessageSquare,
+  BookOpen,
+  ClipboardList,
+  Trophy,
 } from 'lucide-react'
 import OverviewTab from './OverviewTab'
 import SliderManager from './SliderManager'
@@ -29,13 +32,16 @@ import StudentManager from './StudentManager'
 import AttendanceManager from './AttendanceManager'
 import GradeManager from './GradeManager'
 import ParentCommManager from './ParentCommManager'
+import MaterialsManager from './MaterialsManager'
+import HomeworkManager from './HomeworkManager'
+import ResultsManager from './ResultsManager'
 
 interface AdminDashboardProps {
   admin: { id: string; name: string; username: string }
   onLogout: () => void
 }
 
-type TabKey = 'overview' | 'statistics' | 'students' | 'attendance' | 'grades' | 'parents' | 'slider' | 'news' | 'schedules' | 'videos' | 'settings'
+type TabKey = 'overview' | 'statistics' | 'students' | 'attendance' | 'grades' | 'materials' | 'homework' | 'results' | 'parents' | 'slider' | 'news' | 'schedules' | 'videos' | 'settings'
 
 const tabs: { key: TabKey; label: string; icon: React.ReactNode; group?: string }[] = [
   { key: 'overview', label: 'نظرة عامة', icon: <LayoutDashboard className="w-5 h-5" /> },
@@ -44,6 +50,9 @@ const tabs: { key: TabKey; label: string; icon: React.ReactNode; group?: string 
   { key: 'attendance', label: 'الحضور والغياب', icon: <ClipboardCheck className="w-5 h-5" />, group: 'إدارة المدرسة' },
   { key: 'grades', label: 'إدارة الدرجات', icon: <FileText className="w-5 h-5" />, group: 'إدارة المدرسة' },
   { key: 'parents', label: 'أولياء الأمور', icon: <MessageSquare className="w-5 h-5" />, group: 'إدارة المدرسة' },
+  { key: 'materials', label: 'المواد التعليمية', icon: <BookOpen className="w-5 h-5" />, group: 'أدوات المعلم' },
+  { key: 'homework', label: 'الواجبات', icon: <ClipboardList className="w-5 h-5" />, group: 'أدوات المعلم' },
+  { key: 'results', label: 'نتائج الامتحانات', icon: <Trophy className="w-5 h-5" />, group: 'أدوات المعلم' },
   { key: 'slider', label: 'إدارة السلايدر', icon: <ImageIcon className="w-5 h-5" />, group: 'إدارة المحتوى' },
   { key: 'news', label: 'إدارة الأخبار', icon: <Newspaper className="w-5 h-5" />, group: 'إدارة المحتوى' },
   { key: 'schedules', label: 'إدارة الجداول', icon: <Calendar className="w-5 h-5" />, group: 'إدارة المحتوى' },
@@ -69,6 +78,12 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
         return <GradeManager />
       case 'parents':
         return <ParentCommManager />
+      case 'materials':
+        return <MaterialsManager />
+      case 'homework':
+        return <HomeworkManager />
+      case 'results':
+        return <ResultsManager />
       case 'slider':
         return <SliderManager />
       case 'news':
@@ -192,7 +207,7 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
         {/* Mobile Tab Bar - Show only most important tabs */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 border-t shadow-lg">
           <div className="flex justify-around items-center h-16 px-1 overflow-x-auto">
-            {tabs.filter(t => ['overview', 'statistics', 'students', 'attendance', 'grades', 'parents'].includes(t.key)).map((tab) => (
+            {tabs.filter(t => ['overview', 'students', 'materials', 'homework', 'results', 'grades'].includes(t.key)).map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
