@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     // Get or create conversation history
     let history = conversations.get(sessionKey);
     if (!history) {
-      history = [{ role: 'assistant', content: SYSTEM_PROMPT }];
+      history = [];
       conversations.set(sessionKey, history);
     }
 
@@ -36,11 +36,17 @@ export async function POST(request: Request) {
     const ZAI = (await import('z-ai-web-dev-sdk')).default;
     const zai = await ZAI.create();
 
-    const completion = await zai.chat.completions.create({
-      messages: history.map((m) => ({
+    // Build messages array with system prompt first
+    const messagesForAPI = [
+      { role: 'system' as const, content: SYSTEM_PROMPT },
+      ...history.map((m) => ({
         role: m.role as 'assistant' | 'user',
         content: m.content,
       })),
+    ];
+
+    const completion = await zai.chat.completions.create({
+      messages: messagesForAPI,
       thinking: { type: 'disabled' },
     });
 
@@ -49,16 +55,16 @@ export async function POST(request: Request) {
     // Add AI response to history
     history.push({ role: 'assistant', content: aiResponse });
 
-    // Keep conversation manageable (last 20 messages + system prompt)
-    if (history.length > 22) {
-      const trimmed = [history[0], ...history.slice(-20)];
+    // Keep conversation manageable (last 20 messages)
+    if (history.length > 20) {
+      const trimmed = history.slice(-20);
       conversations.set(sessionKey, trimmed);
     }
 
     return NextResponse.json({
       success: true,
       response: aiResponse,
-      messageCount: history.length - 1,
+      messageCount: history.length,
     });
   } catch (error) {
     console.error('Chat API error:', error);

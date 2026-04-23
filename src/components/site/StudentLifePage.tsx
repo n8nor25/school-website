@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Bot, Send, Trash2, ArrowRight, BookOpen, Calculator, Clock,
   Lightbulb, GraduationCap, ExternalLink, Sparkles, Brain,
@@ -143,6 +143,7 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
   const [activeTool, setActiveTool] = useState<'none' | 'calculator' | 'pomodoro' | 'tips'>('none');
   const [sessionId] = useState(() => 'student-' + Date.now());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const sendingRef = useRef(false);
 
   // Daily motivation
   const [dailyMotivation] = useState(() => {
@@ -227,12 +228,14 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
     return () => clearInterval(interval);
   }, [pomodoroRunning, pomodoroMode]);
 
-  const sendMessage = async (text?: string) => {
+  const sendMessage = useCallback(async (text?: string) => {
     const messageText = text || inputMessage;
-    if (!messageText.trim() || isLoading) return;
+    if (!messageText.trim() || isLoading || sendingRef.current) return;
+
+    sendingRef.current = true;
 
     const userMsg: ChatMessage = {
-      id: Date.now().toString(),
+      id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 7),
       from: 'user',
       text: messageText,
       timestamp: new Date(),
@@ -256,7 +259,7 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
 
       if (data.success && data.response) {
         const botMsg: ChatMessage = {
-          id: (Date.now() + 1).toString(),
+          id: Date.now().toString() + '-bot-' + Math.random().toString(36).slice(2, 7),
           from: 'bot',
           text: data.response,
           timestamp: new Date(),
@@ -264,7 +267,7 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
         setMessages((prev) => [...prev, botMsg]);
       } else {
         const errorMsg: ChatMessage = {
-          id: (Date.now() + 1).toString(),
+          id: Date.now().toString() + '-err-' + Math.random().toString(36).slice(2, 7),
           from: 'bot',
           text: data.error || 'عذراً، حدث خطأ. حاول مرة أخرى.',
           timestamp: new Date(),
@@ -273,7 +276,7 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
       }
     } catch {
       const errorMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
+        id: Date.now().toString() + '-catch-' + Math.random().toString(36).slice(2, 7),
         from: 'bot',
         text: 'عذراً، لم أتمكن من الاتصال بالخادم. تأكد من اتصالك بالإنترنت.',
         timestamp: new Date(),
@@ -281,8 +284,9 @@ export default function StudentLifePage({ onBack }: StudentLifePageProps) {
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
+      sendingRef.current = false;
     }
-  };
+  }, [inputMessage, isLoading, selectedSubject, sessionId]);
 
   const clearChat = async () => {
     setMessages([]);
