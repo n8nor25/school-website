@@ -6,27 +6,53 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const grade = searchParams.get('grade')
+    const gradeId = searchParams.get('gradeId')
     const seat = searchParams.get('seat')
     const includeArchived = searchParams.get('archived') === 'true'
 
-    if (!grade || !seat) {
+    if (!seat) {
       return NextResponse.json(
-        { error: 'اسم الصف ورقم الجلوس مطلوبان' },
+        { error: 'رقم الجلوس مطلوب' },
         { status: 400 }
       )
     }
 
-    // Find the ExamResultGrade by gradeName
-    const examGrade = await db.examResultGrade.findFirst({
-      where: { gradeName: grade, archived: includeArchived ? undefined : false },
-      include: {
-        results: true,
-      },
-    })
+    if (!grade && !gradeId) {
+      return NextResponse.json(
+        { error: 'اسم الصف أو معرف الصف مطلوب' },
+        { status: 400 }
+      )
+    }
+
+    // Find the ExamResultGrade by id (preferred) or gradeName
+    let examGrade
+    if (gradeId) {
+      examGrade = await db.examResultGrade.findUnique({
+        where: { id: gradeId },
+        include: {
+          results: true,
+        },
+      })
+    } else {
+      examGrade = await db.examResultGrade.findFirst({
+        where: { gradeName: grade!, archived: includeArchived ? undefined : false },
+        include: {
+          results: true,
+        },
+      })
+    }
 
     if (!examGrade) {
       return NextResponse.json(
         { error: 'صف النتائج غير موجود' },
+        { status: 404 }
+      )
+    }
+
+    // If searching by gradeId, still check archive status unless explicitly including archived
+    if (gradeId && !includeArchived && examGrade.archived) {
+      return NextResponse.json(
+        { error: 'هذه النتائج مؤرشفة وغير متاحة حالياً' },
         { status: 404 }
       )
     }

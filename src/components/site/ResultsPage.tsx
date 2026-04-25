@@ -122,6 +122,7 @@ function getProgressBarColor(percentage: number): string {
 
 export default function ResultsPage({ onBack }: ResultsPageProps) {
   const [grades, setGrades] = useState<GradeOption[]>([]);
+  const [selectedGradeId, setSelectedGradeId] = useState<string>('');
   const [selectedGrade, setSelectedGrade] = useState<string>('');
   const [seatNumber, setSeatNumber] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -156,8 +157,8 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
   }, []);
 
   const handleSearch = async () => {
-    if (!selectedGrade) {
-      setError('يرجى اختيار الصف الدراسي');
+    if (!selectedGradeId) {
+      setError('يرجى اختيار الصف الدراسي والترم');
       return;
     }
     if (!seatNumber.trim()) {
@@ -172,7 +173,7 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
 
     try {
       const res = await fetch(
-        `/api/exam-results/query?grade=${encodeURIComponent(selectedGrade)}&seat=${encodeURIComponent(seatNumber.trim())}`
+        `/api/exam-results/query?gradeId=${encodeURIComponent(selectedGradeId)}&seat=${encodeURIComponent(seatNumber.trim())}`
       );
       const data = await res.json();
 
@@ -190,6 +191,7 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
   };
 
   const handleReset = () => {
+    setSelectedGradeId('');
     setSelectedGrade('');
     setSeatNumber('');
     setResult(null);
@@ -303,25 +305,28 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
                         الصف الدراسي
                       </label>
                       <Select
-                        value={selectedGrade}
+                        value={selectedGradeId}
                         onValueChange={(val) => {
-                          setSelectedGrade(val);
+                          setSelectedGradeId(val);
+                          const g = grades.find(gr => gr.id === val);
+                          setSelectedGrade(g?.gradeName || '');
                           setError(null);
                         }}
                         dir="rtl"
                       >
                         <SelectTrigger className="w-full h-12 text-right bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-base">
-                          <SelectValue placeholder={gradesLoading ? 'جارٍ التحميل...' : 'اختر الصف الدراسي'} />
+                          <SelectValue placeholder={gradesLoading ? 'جارٍ التحميل...' : 'اختر الصف والترم'} />
                         </SelectTrigger>
                         <SelectContent>
                           {grades.map((grade) => (
-                            <SelectItem key={grade.id} value={grade.gradeName}>
+                            <SelectItem key={grade.id} value={grade.id}>
                               <div className="flex items-center gap-2">
-                                <span>{grade.gradeName}</span>
+                                <GraduationCap className="w-4 h-4 text-[#2A374E] dark:text-blue-300" />
+                                <span className="font-medium">{grade.gradeName}</span>
                                 {grade.term && (
-                                  <span className="text-xs text-blue-400">
-                                    ({grade.term})
-                                  </span>
+                                  <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-600 dark:border-emerald-500 dark:text-emerald-400">
+                                    {grade.term}
+                                  </Badge>
                                 )}
                                 <span className="text-xs text-gray-400">
                                   ({grade.studentCount} طالب)
@@ -859,9 +864,9 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
             {/* Congratulatory / Encouragement Message */}
             <div className="animate-fade-in-up">
               {result.passStatus.passed ? (
-                <div className="relative overflow-hidden rounded-2xl border border-amber-200 dark:border-amber-700">
+                <div className="relative overflow-hidden rounded-2xl border border-amber-200 dark:border-amber-700 shadow-lg shadow-amber-100/50 dark:shadow-amber-900/20">
                   <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/10 dark:to-orange-900/20" />
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400" />
+                  <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400" />
                   <div className="relative p-6 text-center">
                     <div className="flex justify-center gap-2 mb-3">
                       <Sparkles className="w-6 h-6 text-amber-500 animate-pulse" />
@@ -871,22 +876,23 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
                     <h4 className="text-xl font-bold text-amber-700 dark:text-amber-300 mb-2">
                       🎉 كل التهاني والتبريكات! 🎉
                     </h4>
-                    <p className="text-amber-600 dark:text-amber-400 text-base leading-relaxed mb-3">
+                    <p className="text-amber-600 dark:text-amber-400 text-base leading-relaxed mb-1">
                       بنتيجتك المتميزة، أسأل الله لك دوام التوفيق والنجاح
-                      <br />
-                      في مسيرتك الدراسية وحياتك القادمة
+                    </p>
+                    <p className="text-amber-600/80 dark:text-amber-400/80 text-sm leading-relaxed mb-3">
+                      في مسيرتك الدراسية وحياتك القادمة، فأنت أهلٌ للتميز دائماً
                     </p>
                     <div className="flex items-center justify-center gap-2 text-amber-500 dark:text-amber-400">
                       <Heart className="w-4 h-4 fill-amber-500" />
-                      <span className="text-sm font-medium">من تصميم الموقع</span>
+                      <span className="text-sm font-medium">بكل الحب والتمنيات ~ من المصمم</span>
                       <Heart className="w-4 h-4 fill-amber-500" />
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="relative overflow-hidden rounded-2xl border border-blue-200 dark:border-blue-700">
+                <div className="relative overflow-hidden rounded-2xl border border-blue-200 dark:border-blue-700 shadow-lg shadow-blue-100/50 dark:shadow-blue-900/20">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/10 dark:to-purple-900/20" />
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400" />
+                  <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400" />
                   <div className="relative p-6 text-center">
                     <div className="flex justify-center gap-2 mb-3">
                       <Sparkles className="w-6 h-6 text-blue-500 animate-pulse" />
@@ -896,14 +902,15 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
                     <h4 className="text-xl font-bold text-blue-700 dark:text-blue-300 mb-2">
                       لا تيأس، فكل نجاح يبدأ بخطوة 💪
                     </h4>
-                    <p className="text-blue-600 dark:text-blue-400 text-base leading-relaxed mb-3">
+                    <p className="text-blue-600 dark:text-blue-400 text-base leading-relaxed mb-1">
                       اجعل هذه التجربة دافعاً للتميز في المرة القادمة
-                      <br />
-                      نؤمن بك وبقدراتك، والمستقبل بين يديك
+                    </p>
+                    <p className="text-blue-600/80 dark:text-blue-400/80 text-sm leading-relaxed mb-3">
+                      نؤمن بك وبقدراتك، والمستقبل بين يديك فلا تستسلم أبداً
                     </p>
                     <div className="flex items-center justify-center gap-2 text-blue-500 dark:text-blue-400">
                       <Heart className="w-4 h-4 fill-blue-500" />
-                      <span className="text-sm font-medium">من تصميم الموقع</span>
+                      <span className="text-sm font-medium">بكل الحب والتمنيات ~ من المصمم</span>
                       <Heart className="w-4 h-4 fill-blue-500" />
                     </div>
                   </div>
