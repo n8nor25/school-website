@@ -20,8 +20,8 @@ const services = [
     title: 'جدول الحصص',
     description: 'عرض وتحميل الجداول الدراسية لجميع المراحل',
     action: 'عرض الجداول',
-    href: '#schedule-section',
-    isSchedule: true,
+    href: '#',
+    isSchedule: false,
   },
   {
     icon: BarChart3,
@@ -55,13 +55,6 @@ const services = [
 ];
 
 export default function Services({ onResultsClick }: ServicesProps) {
-  const handleScheduleClick = () => {
-    const el = document.getElementById('schedule-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <section className="py-16 md:py-24 bg-white dark:bg-gray-900 dark-transition">
       <div className="container mx-auto px-4">
@@ -95,14 +88,7 @@ export default function Services({ onResultsClick }: ServicesProps) {
                 <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">
                   {service.description}
                 </p>
-                {service.isSchedule ? (
-                  <Button
-                    onClick={handleScheduleClick}
-                    className="bg-red-600 hover:bg-red-700 text-white hover:shadow-lg transition-all"
-                  >
-                    {service.action}
-                  </Button>
-                ) : service.isResults ? (
+                {service.isResults ? (
                   <Button
                     onClick={onResultsClick}
                     className="bg-red-600 hover:bg-red-700 text-white hover:shadow-lg transition-all"

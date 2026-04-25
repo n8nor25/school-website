@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Facebook, Twitter, Instagram, Youtube, Sun, Moon, Search, LogIn, LogOut, Menu, X } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube, Sun, Moon, Search, LogIn, LogOut, Menu, X, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
@@ -16,7 +16,7 @@ const navLinks = [
   { label: 'عن المدرسة', href: '#about' },
   { label: 'البرامج التعليمية', href: '#departments' },
   { label: 'الحياة المدرسية', href: 'student-life', isStudentLife: true },
-  { label: 'اتصل بنا', href: '#contact' },
+  { label: 'التواصل', href: '#contact' },
 ];
 
 function getInitialDarkMode(): boolean {
@@ -89,6 +89,9 @@ export default function Header({ onAdminClick, isLoggedIn, onLogout, onStudentLi
               </a>
               <a href="#" className="hover:text-red-400 transition-colors" aria-label="Youtube">
                 <Youtube size={16} />
+              </a>
+              <a href="https://wa.me/200931234567" target="_blank" rel="noopener noreferrer" className="hover:text-green-400 transition-colors" aria-label="WhatsApp">
+                <MessageCircle size={16} />
               </a>
             </div>
           </div>

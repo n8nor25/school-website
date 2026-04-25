@@ -11,7 +11,6 @@ import PhotoGallery from '@/components/site/PhotoGallery';
 import TutorsSwiper from '@/components/site/TutorsSwiper';
 import Testimonials from '@/components/site/Testimonials';
 import Contact from '@/components/site/Contact';
-import ScheduleSection from '@/components/site/ScheduleSection';
 import Footer from '@/components/site/Footer';
 import AdminLogin from '@/components/admin/AdminLogin';
 import AdminDashboard from '@/components/admin/AdminDashboard';
@@ -165,7 +164,6 @@ export default function Home() {
         <NewsAndEvents />
         <Departments />
         <Services onResultsClick={handleResultsClick} />
-        <ScheduleSection />
         <PhotoGallery />
         <TutorsSwiper />
         <Testimonials />

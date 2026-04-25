@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Phone, Mail, MapPin, Clock, Send } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Send, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -57,6 +57,13 @@ export default function Contact() {
       title: 'ساعات العمل',
       value: 'الأحد - الخميس: 7:30 ص - 2:30 م',
       href: '#',
+    },
+    {
+      icon: MessageCircle,
+      title: 'واتساب',
+      value: 'تواصل عبر واتساب',
+      href: 'https://wa.me/200931234567',
+      isWhatsApp: true,
     },
   ];
 
@@ -177,10 +184,12 @@ export default function Contact() {
                   <a
                     key={index}
                     href={info.href}
+                    target={info.isWhatsApp ? '_blank' : undefined}
+                    rel={info.isWhatsApp ? 'noopener noreferrer' : undefined}
                     className="flex items-center gap-4 bg-gray-50 dark:bg-gray-800 rounded-xl p-4 shadow-sm hover-lift transition-all duration-300 group"
                   >
-                    <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center group-hover:bg-red-600 transition-colors">
-                      <IconComponent size={20} className="text-red-600 dark:text-red-400 group-hover:text-white transition-colors" />
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-red-600 transition-colors ${info.isWhatsApp ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+                      <IconComponent size={20} className={`${info.isWhatsApp ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} group-hover:text-white transition-colors`} />
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">{info.title}</p>
