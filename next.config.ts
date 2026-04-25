@@ -6,12 +6,21 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: false,
   allowedDevOrigins: [
-    'preview-chat-1e5dd304-fcb0-48e7-89a6-a739a6036f26.space.z.ai',
+    '.space.z.ai',
+    '.z.ai',
   ],
   experimental: {
     serverActions: {
       bodySizeLimit: '50mb',
     },
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+    ],
   },
 };
 
