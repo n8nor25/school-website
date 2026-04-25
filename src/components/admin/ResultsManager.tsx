@@ -85,104 +85,177 @@ const sampleData: UploadPayload = {
 }
 
 // ===== Arabic-to-English column mapping =====
-// Supports all common Arabic column names used in Egyptian school results
+// Comprehensive mapping including all common Arabic column name variants
+// Handles both ي and ى (ya and alef maqsura) variations
 const ARABIC_TO_ENGLISH: Record<string, string> = {
-  // seatNumber - رقم الجلوس
+  // seatNumber - رقم الجلوس / رقم المقعد
   'رقم الجلوس': 'seatNumber',
   'الرقم': 'seatNumber',
   'رقم': 'seatNumber',
   'جلسة': 'seatNumber',
+  'رقم المقعد': 'seatNumber',
+  'المقعد': 'seatNumber',
   'رقم الجلوس/الرقم القومي': 'seatNumber',
   'رقم الجلوس / الرقم القومي': 'seatNumber',
+  'رقم الجلوس/الرقم القومى': 'seatNumber',
+  'رقم الجلوس / الرقم القومى': 'seatNumber',
+
   // studentName - اسم الطالب
   'اسم الطالب': 'studentName',
   'الاسم': 'studentName',
   'اسم': 'studentName',
   'اسم الطالب بالكامل': 'studentName',
   'إسم الطالب': 'studentName',
-  // arabic - اللغة العربية
+  'الإسم': 'studentName',
+  'إسم': 'studentName',
+  'اسم الطالب': 'studentName',
+  'اسم الطالب بالكامل': 'studentName',
+
+  // arabic - اللغة العربية (handles both ي and ى)
   'عربي': 'arabic',
+  'عربى': 'arabic',
   'العربي': 'arabic',
+  'العربى': 'arabic',
   'لغة عربية': 'arabic',
-  'اللغة العربية': 'arabic',
-  'العربية': 'arabic',
   'لغه عربيه': 'arabic',
   'لغه عربية': 'arabic',
   'لغة عربيه': 'arabic',
-  // english - اللغة الإنجليزية
+  'اللغة العربية': 'arabic',
+  'اللغه العربية': 'arabic',
+  'اللغه العربيه': 'arabic',
+  'اللغة العربيه': 'arabic',
+  'العربية': 'arabic',
+  'العربيه': 'arabic',
+
+  // english - اللغة الإنجليزية (handles both ي and ى, plus "E" abbreviation)
   'انجليزي': 'english',
+  'انجليزى': 'english',
   'الانجليزي': 'english',
+  'الانجليزى': 'english',
   'الإنجليزي': 'english',
+  'الإنجليزى': 'english',
   'لغة انجليزية': 'english',
-  'اللغة الإنجليزية': 'english',
-  'اللغة الانجليزية': 'english',
   'لغه انجليزيه': 'english',
+  'لغة انجليزيه': 'english',
+  'لغه انجليزية': 'english',
+  'اللغة الإنجليزية': 'english',
+  'اللغه الإنجليزيه': 'english',
+  'اللغه الانجليزيه': 'english',
+  'اللغة الانجليزية': 'english',
   'انجليزية': 'english',
   'انجليزيه': 'english',
-  // social - الدراسات الاجتماعية
+  'E': 'english',
+  'e': 'english',
+  'انجليش': 'english',
+
+  // social - الدراسات الاجتماعية (handles both ي and ى)
   'دراسات': 'social',
   'الدراسات': 'social',
   'دراسات اجتماعية': 'social',
+  'دراسات اجتماعيه': 'social',
   'الدراسات الاجتماعية': 'social',
+  'الدراسات الاجتماعيه': 'social',
   'اجتماعيات': 'social',
   'الاجتماعيات': 'social',
-  'دراسات اجتماعيه': 'social',
-  // math - الرياضيات
+
+  // math components - جبر and هندسة map separately
+  // They will be COMBINED into math later
+  'جبر': '_algebra',
+  'الجبر': '_algebra',
+  'هندسة': '_geometry',
+  'الهندسة': '_geometry',
+  'هندسه': '_geometry',
+  'الهندسه': '_geometry',
+
+  // math - الرياضيات (combined, if already combined in source)
   'رياضيات': 'math',
   'الرياضيات': 'math',
   'رياضه': 'math',
   'الرياضة': 'math',
   'حساب': 'math',
   'الحساب': 'math',
+  'رياضيات وشكل': 'math',
+
   // science - العلوم
   'علوم': 'science',
   'العلوم': 'science',
   'العوم': 'science',
-  // total - المجموع
+
+  // total - المجموع (handles both ي and ى)
   'المجموع': 'total',
   'مجموع': 'total',
   'المجموع الكلي': 'total',
+  'المجموع الكلى': 'total',
   'الاجمالي': 'total',
   'الإجمالي': 'total',
+  'الاجمالى': 'total',
+  'الإجمالى': 'total',
   'مجموع المواد': 'total',
-  // religion - التربية الدينية
+
+  // religion - التربية الدينية (handles both ي and ى)
   'دين': 'religion',
   'الدين': 'religion',
   'تربية دينية': 'religion',
-  'التربية الدينية': 'religion',
   'تربيه دينيه': 'religion',
+  'التربية الدينية': 'religion',
+  'التربيه الدينيه': 'religion',
   'ديني': 'religion',
   'الدينية': 'religion',
-  // art - التربية الفنية
+  'الدينيه': 'religion',
+
+  // art - التربية الفنية / رسم (handles both ي and ى)
   'فنية': 'art',
   'الفنية': 'art',
+  'فنيه': 'art',
+  'الفنيه': 'art',
   'تربية فنية': 'art',
-  'التربية الفنية': 'art',
   'تربيه فنيه': 'art',
+  'التربية الفنية': 'art',
+  'التربيه الفنيه': 'art',
   'فنون': 'art',
   'الفنون': 'art',
-  // computer - الحاسب الآلي
+  'رسم': 'art',
+  'الرسم': 'art',
+  'تربية فنية وموسيقى': 'art',
+  'التربية الفنية والموسيقى': 'art',
+
+  // computer - الحاسب الآلي (handles both ي and ى)
   'كمبيوتر': 'computer',
   'الكمبيوتر': 'computer',
   'حاسب': 'computer',
   'الحاسب': 'computer',
   'حاسب آلي': 'computer',
   'الحاسب الآلي': 'computer',
+  'الحاسب الالى': 'computer',
+  'حاسب الى': 'computer',
   'الحاسوب': 'computer',
   'تكنولوجيا': 'computer',
   'تكنولوجيا المعلومات': 'computer',
+  'كمبيوتر وتكنولوجيا': 'computer',
+  'معلومات': 'computer',
+
   // gradeName - المرحلة/الصف
   'المرحلة': 'gradeName',
   'الصف': 'gradeName',
   'المرحله': 'gradeName',
   'الصف الدراسي': 'gradeName',
-  // Other fields that should be ignored
+
+  // Fields that should be ignored
+  'المدرسة': '_ignore',
+  'مدرسة': '_ignore',
+  'الادارة': '_ignore',
+  'ادارة': '_ignore',
+  'الإدارة': '_ignore',
+  'المديرية': '_ignore',
   'الشعبة': '_ignore',
   'شعبة': '_ignore',
   'الشعبه': '_ignore',
   'الرقم الوطني': '_ignore',
   'رقم قومي': '_ignore',
   'الرقم القومي': '_ignore',
+  'الرقم القومى': '_ignore',
+  'رقم قومى': '_ignore',
+  'رقم الوطني': '_ignore',
   'الهاتف': '_ignore',
   'العمر': '_ignore',
   'النسبة': '_ignore',
@@ -192,13 +265,68 @@ const ARABIC_TO_ENGLISH: Record<string, string> = {
   'التقدير': '_ignore',
   'الحالة': '_ignore',
   'حالة': '_ignore',
+  'ملاحظات': '_ignore',
+  'ملاحظه': '_ignore',
+  'الحاله': '_ignore',
+  'النسبه': '_ignore',
+  'التربية الوطنية': '_ignore',
+  'التربيه الوطنيه': '_ignore',
+  'السلوك': '_ignore',
+  'المواظبة': '_ignore',
+}
+
+/**
+ * Worksheet name to grade name mapping
+ * Handles Arabic worksheet names like "الصف الاول", "الصف الثانى", etc.
+ */
+const WORKSHEET_GRADE_MAP: Record<string, string> = {
+  'الصف الاول': 'الأول الإعدادي',
+  'الصف الأول': 'الأول الإعدادي',
+  'الصف الاول الاعدادي': 'الأول الإعدادي',
+  'الصف الأول الإعدادي': 'الأول الإعدادي',
+  'الأول الإعدادي': 'الأول الإعدادي',
+  'الاول الاعدادي': 'الأول الإعدادي',
+  'الصف الثانى': 'الثاني الإعدادي',
+  'الصف الثاني': 'الثاني الإعدادي',
+  'الصف الثانى الاعدادي': 'الثاني الإعدادي',
+  'الصف الثاني الإعدادي': 'الثاني الإعدادي',
+  'الثاني الإعدادي': 'الثاني الإعدادي',
+  'الثانى الاعدادي': 'الثاني الإعدادي',
+  'الصف الثالث': 'الثالث الإعدادي',
+  'الصف الثالث الاعدادي': 'الثالث الإعدادي',
+  'الصف الثالث الإعدادي': 'الثالث الإعدادي',
+  'الثالث الإعدادي': 'الثالث الإعدادي',
+  'الثالث الاعدادي': 'الثالث الإعدادي',
+}
+
+/**
+ * Normalize a worksheet key to a grade name
+ */
+function normalizeWorksheetKey(key: string): string {
+  const trimmed = key.trim()
+  // Check direct match first
+  if (WORKSHEET_GRADE_MAP[trimmed]) {
+    return WORKSHEET_GRADE_MAP[trimmed]
+  }
+  // Check case-insensitive
+  const lowerKey = trimmed.toLowerCase()
+  for (const [k, v] of Object.entries(WORKSHEET_GRADE_MAP)) {
+    if (k.toLowerCase() === lowerKey) return v
+  }
+  // Return as-is if no match (user can edit it)
+  return trimmed
 }
 
 /**
  * Normalize a single result object: convert Arabic keys to English
+ * Handles combining جبر + هندسة into math
  */
 function normalizeResult(raw: Record<string, unknown>): Record<string, unknown> {
   const normalized: Record<string, unknown> = {}
+  let algebra = 0
+  let geometry = 0
+  let hasAlgebra = false
+  let hasGeometry = false
 
   for (const [key, value] of Object.entries(raw)) {
     const trimmedKey = key.trim()
@@ -207,17 +335,49 @@ function normalizeResult(raw: Record<string, unknown>): Record<string, unknown> 
       normalized[trimmedKey] = value
     } else if (ARABIC_TO_ENGLISH[trimmedKey]) {
       const mapped = ARABIC_TO_ENGLISH[trimmedKey]
-      if (mapped !== '_ignore') {
+      if (mapped === '_ignore') {
+        // Skip this field
+      } else if (mapped === '_algebra') {
+        algebra = Number(value) || 0
+        hasAlgebra = true
+      } else if (mapped === '_geometry') {
+        geometry = Number(value) || 0
+        hasGeometry = true
+      } else {
         normalized[mapped] = value
       }
     } else {
       // Try case-insensitive match
       const lowerKey = trimmedKey.toLowerCase()
       const match = Object.keys(ARABIC_TO_ENGLISH).find(k => k.toLowerCase() === lowerKey)
-      if (match && ARABIC_TO_ENGLISH[match] !== '_ignore') {
-        normalized[ARABIC_TO_ENGLISH[match]] = value
+      if (match) {
+        const mapped = ARABIC_TO_ENGLISH[match]
+        if (mapped === '_ignore') {
+          // Skip
+        } else if (mapped === '_algebra') {
+          algebra = Number(value) || 0
+          hasAlgebra = true
+        } else if (mapped === '_geometry') {
+          geometry = Number(value) || 0
+          hasGeometry = true
+        } else {
+          normalized[mapped] = value
+        }
       }
-      // If no match, keep the original key (might be useful data)
+      // If no match, skip the field (don't keep unrecognized keys)
+    }
+  }
+
+  // Combine جبر + هندسة into math if either exists
+  if (hasAlgebra || hasGeometry) {
+    // If math already exists, add algebra + geometry to it
+    const existingMath = Number(normalized.math) || 0
+    if (hasAlgebra && hasGeometry) {
+      normalized.math = algebra + geometry
+    } else if (hasAlgebra) {
+      normalized.math = existingMath + algebra
+    } else {
+      normalized.math = existingMath + geometry
     }
   }
 
@@ -225,59 +385,118 @@ function normalizeResult(raw: Record<string, unknown>): Record<string, unknown> 
 }
 
 /**
- * Normalize an entire upload payload (array or object with results)
- * Converts Arabic column names to English automatically
+ * Detect worksheet-based JSON structure: { "الصف الاول": [...], "الصف الثانى": [...] }
+ * Returns array of { gradeName, results } or null if not worksheet format
  */
-function normalizePayload(data: unknown): { gradeName: string; results: Record<string, unknown>[]; convertedCount: number } {
-  let results: Record<string, unknown>[] = []
-  let extractedGradeName = ''
-  let convertedCount = 0
+function detectWorksheetStructure(data: unknown): { gradeName: string; results: Record<string, unknown>[] }[] | null {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return null
+  }
 
-  if (Array.isArray(data)) {
-    results = data as Record<string, unknown>[]
-  } else if (data && typeof data === 'object') {
-    const obj = data as Record<string, unknown>
-    if (obj.results && Array.isArray(obj.results)) {
-      results = obj.results as Record<string, unknown>[]
-      if (obj.gradeName) extractedGradeName = String(obj.gradeName)
-    } else {
-      // Maybe it's a single result object
-      results = [obj]
+  const obj = data as Record<string, unknown>
+  const entries = Object.entries(obj)
+
+  // If it has gradeName and results fields, it's standard format
+  if (obj.gradeName || obj.results) {
+    return null
+  }
+
+  // Check if all values are arrays (worksheet format)
+  const worksheetEntries: { gradeName: string; results: Record<string, unknown>[] }[] = []
+  for (const [key, value] of entries) {
+    if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
+      const gradeName = normalizeWorksheetKey(key)
+      worksheetEntries.push({ gradeName, results: value as Record<string, unknown>[] })
     }
   }
 
-  // Check if conversion is needed and normalize
-  const normalizedResults = results.map((item) => {
-    const original = { ...item }
-    const normalized = normalizeResult(original)
+  return worksheetEntries.length > 0 ? worksheetEntries : null
+}
 
-    // Check if any Arabic key was converted
-    const hasArabicKeys = Object.keys(original).some(k => {
-      const trimmed = k.trim()
-      return ARABIC_TO_ENGLISH[trimmed] && ARABIC_TO_ENGLISH[trimmed] !== '_ignore'
+/**
+ * Normalize an entire upload payload (array or object with results)
+ * Converts Arabic column names to English automatically
+ * Handles worksheet-based JSON structure
+ */
+function normalizePayload(data: unknown): { grades: { gradeName: string; results: Record<string, unknown>[] }[]; convertedCount: number } {
+  let grades: { gradeName: string; results: Record<string, unknown>[] }[] = []
+  let convertedCount = 0
+
+  // Check for worksheet structure first
+  const worksheets = detectWorksheetStructure(data)
+  if (worksheets) {
+    for (const ws of worksheets) {
+      const normalizedResults = ws.results.map((item) => {
+        const normalized = normalizeResult(item)
+        const hasArabicKeys = Object.keys(item).some(k => {
+          const trimmed = k.trim()
+          return ARABIC_TO_ENGLISH[trimmed] && ARABIC_TO_ENGLISH[trimmed] !== '_ignore'
+        })
+        if (hasArabicKeys) convertedCount++
+        return normalized
+      })
+      grades.push({
+        gradeName: ws.gradeName,
+        results: normalizedResults,
+      })
+    }
+  } else if (Array.isArray(data)) {
+    // Simple array of results
+    const normalizedResults = (data as Record<string, unknown>[]).map((item) => {
+      const normalized = normalizeResult(item)
+      const hasArabicKeys = Object.keys(item).some(k => {
+        const trimmed = k.trim()
+        return ARABIC_TO_ENGLISH[trimmed] && ARABIC_TO_ENGLISH[trimmed] !== '_ignore'
+      })
+      if (hasArabicKeys) convertedCount++
+      return normalized
     })
-    if (hasArabicKeys) convertedCount++
+    grades.push({ gradeName: '', results: normalizedResults })
+  } else if (data && typeof data === 'object') {
+    const obj = data as Record<string, unknown>
+    if (obj.results && Array.isArray(obj.results)) {
+      // Standard { gradeName, results } format
+      const normalizedResults = (obj.results as Record<string, unknown>[]).map((item) => {
+        const normalized = normalizeResult(item)
+        const hasArabicKeys = Object.keys(item).some(k => {
+          const trimmed = k.trim()
+          return ARABIC_TO_ENGLISH[trimmed] && ARABIC_TO_ENGLISH[trimmed] !== '_ignore'
+        })
+        if (hasArabicKeys) convertedCount++
+        return normalized
+      })
+      grades.push({
+        gradeName: String(obj.gradeName || ''),
+        results: normalizedResults,
+      })
+    } else {
+      // Single result object
+      const normalized = normalizeResult(obj)
+      const hasArabicKeys = Object.keys(obj).some(k => {
+        const trimmed = k.trim()
+        return ARABIC_TO_ENGLISH[trimmed] && ARABIC_TO_ENGLISH[trimmed] !== '_ignore'
+      })
+      if (hasArabicKeys) convertedCount++
+      grades.push({ gradeName: '', results: [normalized] })
+    }
+  }
 
-    return normalized
-  })
-
-  // Try to extract gradeName from the first result if not provided
-  if (!extractedGradeName && normalizedResults.length > 0 && normalizedResults[0].gradeName) {
-    extractedGradeName = String(normalizedResults[0].gradeName)
+  // Auto-calculate totals for all results
+  for (const grade of grades) {
+    grade.results = grade.results.map(autoCalculateTotal)
   }
 
   // Remove gradeName from individual results
-  const cleanResults = normalizedResults.map(({ gradeName: _gn, ...rest }) => rest)
-
-  return {
-    gradeName: extractedGradeName,
-    results: cleanResults,
-    convertedCount,
+  for (const grade of grades) {
+    grade.results = grade.results.map(({ gradeName: _gn, ...rest }) => rest)
   }
+
+  return { grades, convertedCount }
 }
 
 /**
  * Auto-calculate total if missing or zero
+ * Total = sum of added subjects (arabic, english, social, math, science)
  */
 function autoCalculateTotal(result: Record<string, unknown>): Record<string, unknown> {
   const addedSubjects = ['arabic', 'english', 'social', 'math', 'science'] as const
@@ -326,6 +545,7 @@ export default function ResultsManager() {
   const [fileReadSuccess, setFileReadSuccess] = useState(false)
   const [jsonError, setJsonError] = useState<string | null>(null)
   const [conversionInfo, setConversionInfo] = useState<string | null>(null)
+  const [multiGradeInfo, setMultiGradeInfo] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -368,6 +588,7 @@ export default function ResultsManager() {
     setFileReadSuccess(false)
     setJsonError(null)
     setConversionInfo(null)
+    setMultiGradeInfo(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -380,33 +601,68 @@ export default function ResultsManager() {
 
   const processParsedData = (parsed: unknown) => {
     // Normalize Arabic columns to English
-    const { gradeName: extractedGrade, results: normalizedResults, convertedCount } = normalizePayload(parsed)
+    const { grades: parsedGrades, convertedCount } = normalizePayload(parsed)
 
-    // Auto-calculate totals for results that don't have total
-    const finalResults = normalizedResults.map(autoCalculateTotal)
-
-    // Set grade name
-    if (extractedGrade && !gradeName) {
-      setGradeName(extractedGrade)
+    if (parsedGrades.length === 0 || parsedGrades.every(g => g.results.length === 0)) {
+      setJsonError('لم يتم العثور على بيانات صالحة في الملف')
+      toast.error('لم يتم العثور على بيانات صالحة في الملف')
+      return
     }
 
-    // Build the final payload
-    const payload = {
-      gradeName: extractedGrade || gradeName,
-      results: finalResults,
-    }
+    if (parsedGrades.length === 1) {
+      // Single grade
+      const grade = parsedGrades[0]
+      if (grade.gradeName && !gradeName) {
+        setGradeName(grade.gradeName)
+      }
 
-    setJsonData(JSON.stringify(payload, null, 2))
-    setFileReadSuccess(true)
+      const payload = {
+        gradeName: grade.gradeName || gradeName,
+        results: grade.results,
+      }
 
-    if (convertedCount > 0) {
-      setConversionInfo(`تم تحويل ${convertedCount} سجل من الأعمدة العربية إلى الإنجليزية تلقائياً`)
-      toast.success(`تم قراءة الملف وتحويل الأعمدة تلقائياً - ${finalResults.length} طالب`, {
-        description: 'تم تحويل أسماء الأعمدة العربية إلى الإنجليزية',
-        duration: 5000,
-      })
+      setJsonData(JSON.stringify(payload, null, 2))
+      setFileReadSuccess(true)
+      setMultiGradeInfo(null)
+
+      if (convertedCount > 0) {
+        setConversionInfo(`تم تحويل ${convertedCount} سجل من الأعمدة العربية إلى الإنجليزية تلقائياً`)
+        toast.success(`تم قراءة الملف وتحويل الأعمدة تلقائياً - ${grade.results.length} طالب`, {
+          description: 'تم تحويل أسماء الأعمدة العربية إلى الإنجليزية',
+          duration: 5000,
+        })
+      } else {
+        toast.success(`تم قراءة الملف بنجاح - ${grade.results.length} طالب`)
+      }
     } else {
-      toast.success(`تم قراءة الملف بنجاح - ${finalResults.length} طالب`)
+      // Multiple grades (worksheet format) - upload all at once
+      const totalStudents = parsedGrades.reduce((sum, g) => sum + g.results.length, 0)
+      const gradeNames = parsedGrades.map(g => g.gradeName).filter(Boolean).join('، ')
+
+      setMultiGradeInfo(`تم اكتشاف ${parsedGrades.length} أوراق عمل: ${gradeNames}`)
+
+      // Store all grades data for batch upload
+      const batchData = parsedGrades.map(g => ({
+        gradeName: g.gradeName,
+        results: g.results,
+      }))
+
+      setJsonData(JSON.stringify(batchData, null, 2))
+      setFileReadSuccess(true)
+
+      // Set first grade name as default
+      if (parsedGrades[0].gradeName) {
+        setGradeName(parsedGrades[0].gradeName)
+      }
+
+      if (convertedCount > 0) {
+        setConversionInfo(`تم تحويل ${convertedCount} سجل من الأعمدة العربية إلى الإنجليزية تلقائياً`)
+      }
+
+      toast.success(`تم قراءة ${parsedGrades.length} أوراق عمل - ${totalStudents} طالب إجمالاً`, {
+        description: gradeNames,
+        duration: 6000,
+      })
     }
 
     setInputMode('json')
@@ -417,6 +673,7 @@ export default function ResultsManager() {
     setFileReadSuccess(false)
     setJsonError(null)
     setConversionInfo(null)
+    setMultiGradeInfo(null)
 
     try {
       const text = await file.text()
@@ -447,116 +704,178 @@ export default function ResultsManager() {
     processFile(file)
   }
 
-  const validateJsonData = (data: string): { valid: boolean; error: string | null; resultCount: number } => {
+  const validateJsonData = (data: string): { valid: boolean; error: string | null; resultCount: number; isMultiGrade: boolean } => {
     if (!data.trim()) {
-      return { valid: false, error: null, resultCount: 0 }
+      return { valid: false, error: null, resultCount: 0, isMultiGrade: false }
     }
     try {
       const parsed = JSON.parse(data)
+
+      // Check for multi-grade format (array of grade objects)
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].gradeName && Array.isArray(parsed[0].results)) {
+        const totalResults = parsed.reduce((sum: number, g: { results: unknown[] }) => sum + g.results.length, 0)
+        // Check that results have English fields
+        if (parsed[0].results.length > 0) {
+          const first = parsed[0].results[0] as Record<string, unknown>
+          if (!first.seatNumber && !first.studentName) {
+            return { valid: false, error: 'الأعمدة باللغة العربية. يرجى رفع الملف مرة أخرى ليتم التحويل تلقائياً', resultCount: 0, isMultiGrade: false }
+          }
+        }
+        return { valid: true, error: null, resultCount: totalResults, isMultiGrade: true }
+      }
+
       if (parsed.results && Array.isArray(parsed.results)) {
-        // Check that results have the required English fields
         if (parsed.results.length > 0) {
           const first = parsed.results[0]
           if (!first.seatNumber && !first.studentName) {
-            return { valid: false, error: 'الأعمدة باللغة العربية. يرجى رفع الملف مرة أخرى ليتم التحويل تلقائياً', resultCount: 0 }
+            return { valid: false, error: 'الأعمدة باللغة العربية. يرجى رفع الملف مرة أخرى ليتم التحويل تلقائياً', resultCount: 0, isMultiGrade: false }
           }
         }
-        return { valid: true, error: null, resultCount: parsed.results.length }
+        return { valid: true, error: null, resultCount: parsed.results.length, isMultiGrade: false }
       } else if (Array.isArray(parsed)) {
-        return { valid: true, error: null, resultCount: parsed.length }
+        return { valid: true, error: null, resultCount: parsed.length, isMultiGrade: false }
       } else {
-        return { valid: false, error: 'صيغة البيانات غير صحيحة. يجب أن تحتوي على مصفوفة results', resultCount: 0 }
+        return { valid: false, error: 'صيغة البيانات غير صحيحة. يجب أن تحتوي على مصفوفة results', resultCount: 0, isMultiGrade: false }
       }
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : 'خطأ في صيغة JSON'
       const posMatch = errorMsg.match(/position (\d+)/i)
       if (posMatch) {
-        return { valid: false, error: `خطأ في صيغة JSON عند الموضع ${posMatch[1]}`, resultCount: 0 }
+        return { valid: false, error: `خطأ في صيغة JSON عند الموضع ${posMatch[1]}`, resultCount: 0, isMultiGrade: false }
       }
-      return { valid: false, error: 'بيانات JSON غير صالحة', resultCount: 0 }
+      return { valid: false, error: 'بيانات JSON غير صالحة', resultCount: 0, isMultiGrade: false }
     }
   }
 
   const handleUpload = async () => {
-    if (!gradeName.trim()) {
-      toast.error('يرجى إدخال اسم الصف')
-      return
-    }
-
     if (!jsonData.trim()) {
       toast.error('يرجى إدخال بيانات النتائج أو رفع ملف JSON')
       return
     }
 
-    let parsed: UploadPayload
+    let parsed: unknown
     try {
-      const raw = JSON.parse(jsonData)
-      // Try normalizing again in case user pasted Arabic JSON directly
-      const { gradeName: gn, results: normalizedResults } = normalizePayload(raw)
-      const finalResults = normalizedResults.map(autoCalculateTotal)
+      parsed = JSON.parse(jsonData)
+      // Re-normalize in case user pasted Arabic JSON directly
+      const { grades: parsedGrades } = normalizePayload(parsed)
 
-      if (finalResults.length > 0) {
-        parsed = {
-          gradeName: gradeName.trim() || gn,
-          results: finalResults as ExamResultEntry[],
-        }
-      } else if (raw.results && Array.isArray(raw.results)) {
-        parsed = {
-          gradeName: gradeName.trim(),
-          results: raw.results,
-        }
-      } else if (Array.isArray(raw)) {
-        parsed = {
-          gradeName: gradeName.trim(),
-          results: raw,
-        }
-      } else {
-        toast.error('صيغة البيانات غير صحيحة. يجب أن تحتوي على مصفوفة results')
+      if (parsedGrades.length === 0) {
+        toast.error('صيغة البيانات غير صحيحة')
         return
+      }
+
+      if (parsedGrades.length > 1 || (parsedGrades.length === 1 && parsedGrades[0].gradeName && !gradeName.trim())) {
+        // Multi-grade upload - upload each grade separately
+        setUploading(true)
+        let totalUploaded = 0
+        let errorCount = 0
+
+        for (const grade of parsedGrades) {
+          if (grade.results.length === 0) continue
+
+          // Validate required fields
+          let hasError = false
+          for (let i = 0; i < grade.results.length; i++) {
+            if (!grade.results[i].seatNumber || !grade.results[i].studentName) {
+              toast.error(`${grade.gradeName}: السطر ${i + 1} - رقم الجلوس واسم الطالب مطلوبان`)
+              hasError = true
+              break
+            }
+          }
+          if (hasError) {
+            errorCount++
+            continue
+          }
+
+          try {
+            const res = await fetch('/api/exam-results', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                gradeName: grade.gradeName,
+                results: grade.results,
+              }),
+            })
+
+            if (res.ok) {
+              const data = await res.json()
+              totalUploaded += data.resultsCount
+            } else {
+              errorCount++
+              const data = await res.json()
+              console.error(`Error uploading ${grade.gradeName}:`, data.error)
+            }
+          } catch {
+            errorCount++
+          }
+        }
+
+        if (totalUploaded > 0) {
+          toast.success(`تم رفع النتائج بنجاح - ${totalUploaded} طالب في ${parsedGrades.length} صفوف`, {
+            icon: <CheckCircle className="w-4 h-4 text-emerald-500" />,
+          })
+          setUploadDialogOpen(false)
+          resetUploadForm()
+          fetchGrades()
+        }
+
+        if (errorCount > 0) {
+          toast.warning(`فشل رفع ${errorCount} صفوف`)
+        }
+
+        setUploading(false)
+        return
+      }
+
+      // Single grade upload
+      const grade = parsedGrades[0]
+      const uploadPayload: UploadPayload = {
+        gradeName: gradeName.trim() || grade.gradeName,
+        results: grade.results as ExamResultEntry[],
+      }
+
+      if (uploadPayload.results.length === 0) {
+        toast.error('لا توجد نتائج للرفع')
+        return
+      }
+
+      // Validate required fields
+      for (let i = 0; i < uploadPayload.results.length; i++) {
+        if (!uploadPayload.results[i].seatNumber || !uploadPayload.results[i].studentName) {
+          toast.error(`السطر ${i + 1}: رقم الجلوس واسم الطالب مطلوبان`)
+          return
+        }
+      }
+
+      setUploading(true)
+      try {
+        const res = await fetch('/api/exam-results', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(uploadPayload),
+        })
+
+        const data = await res.json()
+
+        if (res.ok) {
+          toast.success(`تم رفع النتائج بنجاح - ${data.resultsCount} طالب`, {
+            icon: <CheckCircle className="w-4 h-4 text-emerald-500" />,
+          })
+          setUploadDialogOpen(false)
+          resetUploadForm()
+          fetchGrades()
+        } else {
+          toast.error(data.error || 'حدث خطأ في رفع النتائج')
+        }
+      } catch (error) {
+        console.error('Upload error:', error)
+        toast.error('حدث خطأ في الاتصال بالخادم')
+      } finally {
+        setUploading(false)
       }
     } catch {
       toast.error('بيانات JSON غير صالحة. تأكد من الصيغة الصحيحة')
       return
-    }
-
-    if (parsed.results.length === 0) {
-      toast.error('لا توجد نتائج للرفع')
-      return
-    }
-
-    // Validate required fields
-    for (let i = 0; i < parsed.results.length; i++) {
-      if (!parsed.results[i].seatNumber || !parsed.results[i].studentName) {
-        toast.error(`السطر ${i + 1}: رقم الجلوس واسم الطالب مطلوبان`)
-        return
-      }
-    }
-
-    setUploading(true)
-    try {
-      const res = await fetch('/api/exam-results', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsed),
-      })
-
-      const data = await res.json()
-
-      if (res.ok) {
-        toast.success(`تم رفع النتائج بنجاح - ${data.resultsCount} طالب`, {
-          icon: <CheckCircle className="w-4 h-4 text-emerald-500" />,
-        })
-        setUploadDialogOpen(false)
-        resetUploadForm()
-        fetchGrades()
-      } else {
-        toast.error(data.error || 'حدث خطأ في رفع النتائج')
-      }
-    } catch (error) {
-      console.error('Upload error:', error)
-      toast.error('حدث خطأ في الاتصال بالخادم')
-    } finally {
-      setUploading(false)
     }
   }
 
@@ -608,7 +927,7 @@ export default function ResultsManager() {
   }
 
   const jsonValidation = validateJsonData(jsonData)
-  const canUpload = gradeName.trim() && jsonData.trim() && jsonValidation.valid
+  const canUpload = jsonData.trim() && jsonValidation.valid && (jsonValidation.isMultiGrade || gradeName.trim())
 
   if (loading) {
     return (
@@ -792,6 +1111,9 @@ export default function ResultsManager() {
                 placeholder="مثال: الأول الإعدادي"
                 className="text-right"
               />
+              {multiGradeInfo && (
+                <p className="text-xs text-blue-600 dark:text-blue-400">{multiGradeInfo}</p>
+              )}
             </div>
 
             {/* Input Mode Switch */}
@@ -870,7 +1192,16 @@ export default function ResultsManager() {
                   </div>
                 )}
 
-                {fileReadSuccess && !conversionInfo && (
+                {multiGradeInfo && (
+                  <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 flex items-center gap-2 border border-purple-200 dark:border-purple-800">
+                    <GraduationCap className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
+                    <span className="text-sm text-purple-700 dark:text-purple-300">
+                      {multiGradeInfo}
+                    </span>
+                  </div>
+                )}
+
+                {fileReadSuccess && !conversionInfo && !multiGradeInfo && (
                   <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span className="text-sm text-emerald-700 dark:text-emerald-300">
@@ -924,6 +1255,7 @@ export default function ResultsManager() {
                           setFileReadSuccess(false)
                           setSelectedFileName('')
                           setConversionInfo(null)
+                          setMultiGradeInfo(null)
                         }}
                       >
                         <X className="w-3 h-3 ml-1" />
@@ -945,15 +1277,19 @@ export default function ResultsManager() {
 أمثلة أسماء الأعمدة العربية:
 "رقم الجلوس" أو "الرقم" → seatNumber
 "اسم الطالب" أو "الاسم" → studentName
-"عربي" أو "اللغة العربية" → arabic
-"انجليزي" أو "اللغة الإنجليزية" → english
+"عربي" أو "عربى" أو "اللغة العربية" → arabic
+"E" أو "انجليزي" أو "اللغة الإنجليزية" → english
 "دراسات" أو "الدراسات الاجتماعية" → social
-"رياضيات" أو "الرياضيات" → math
+"جبر" + "هندسة" → math (يتم جمعهما تلقائياً)
+"رياضيات" → math
 "علوم" أو "العلوم" → science
 "المجموع" → total
 "دين" أو "التربية الدينية" → religion
-"فنية" أو "التربية الفنية" → art
-"كمبيوتر" أو "الحاسب الآلي" → computer`}
+"رسم" أو "فنية" أو "التربية الفنية" → art
+"حاسب" أو "الحاسب الآلي" → computer
+
+يدعم أوراق العمل المتعددة:
+{ "الصف الاول": [...], "الصف الثانى": [...] }`}
                   rows={12}
                   className="font-mono text-sm text-left direction-ltr"
                   dir="ltr"
@@ -966,6 +1302,7 @@ export default function ResultsManager() {
                         <CheckCircle className="w-3.5 h-3.5" />
                         <span className="text-xs font-medium">
                           صيغة JSON صالحة - {jsonValidation.resultCount} طالب
+                          {jsonValidation.isMultiGrade && ' (أوراق عمل متعددة)'}
                         </span>
                       </div>
                     ) : jsonValidation.error ? (

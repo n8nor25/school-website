@@ -5,27 +5,67 @@ import { NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 
 // ===== Arabic-to-English column mapping (backend safety net) =====
+// Comprehensive mapping including all common Arabic column name variants
+// Handles both ي and ى (ya and alef maqsura) variations
 const ARABIC_TO_ENGLISH: Record<string, string> = {
+  // seatNumber
   'رقم الجلوس': 'seatNumber', 'الرقم': 'seatNumber', 'رقم': 'seatNumber',
-  'اسم الطالب': 'studentName', 'الاسم': 'studentName', 'اسم': 'studentName', 'إسم الطالب': 'studentName',
-  'عربي': 'arabic', 'العربي': 'arabic', 'لغة عربية': 'arabic', 'اللغة العربية': 'arabic', 'العربية': 'arabic',
-  'انجليزي': 'english', 'الانجليزي': 'english', 'الإنجليزي': 'english', 'لغة انجليزية': 'english',
-  'اللغة الإنجليزية': 'english', 'اللغة الانجليزية': 'english', 'انجليزية': 'english',
-  'دراسات': 'social', 'الدراسات': 'social', 'دراسات اجتماعية': 'social', 'الدراسات الاجتماعية': 'social',
-  'اجتماعيات': 'social', 'الاجتماعيات': 'social',
-  'رياضيات': 'math', 'الرياضيات': 'math', 'رياضه': 'math', 'حساب': 'math', 'الحساب': 'math',
+  'رقم المقعد': 'seatNumber', 'المقعد': 'seatNumber',
+  'رقم الجلوس/الرقم القومي': 'seatNumber', 'رقم الجلوس/الرقم القومى': 'seatNumber',
+
+  // studentName
+  'اسم الطالب': 'studentName', 'الاسم': 'studentName', 'اسم': 'studentName',
+  'إسم الطالب': 'studentName', 'الإسم': 'studentName', 'إسم': 'studentName',
+
+  // arabic (handles both ي and ى)
+  'عربي': 'arabic', 'عربى': 'arabic', 'العربي': 'arabic', 'العربى': 'arabic',
+  'لغة عربية': 'arabic', 'لغه عربيه': 'arabic', 'اللغة العربية': 'arabic',
+  'اللغه العربيه': 'arabic', 'العربية': 'arabic', 'العربيه': 'arabic',
+
+  // english (handles E abbreviation and both ي/ى)
+  'انجليزي': 'english', 'انجليزى': 'english', 'الانجليزي': 'english',
+  'الإنجليزي': 'english', 'لغة انجليزية': 'english', 'اللغة الإنجليزية': 'english',
+  'انجليزية': 'english', 'E': 'english',
+
+  // social
+  'دراسات': 'social', 'الدراسات': 'social', 'دراسات اجتماعية': 'social',
+  'الدراسات الاجتماعية': 'social', 'اجتماعيات': 'social',
+
+  // math components (will be combined later)
+  'جبر': '_algebra', 'الجبر': '_algebra',
+  'هندسة': '_geometry', 'الهندسة': '_geometry', 'هندسه': '_geometry',
+
+  // math (combined)
+  'رياضيات': 'math', 'الرياضيات': 'math', 'رياضه': 'math', 'حساب': 'math',
+
+  // science
   'علوم': 'science', 'العلوم': 'science',
-  'المجموع': 'total', 'مجموع': 'total', 'المجموع الكلي': 'total', 'الاجمالي': 'total', 'الإجمالي': 'total',
-  'دين': 'religion', 'الدين': 'religion', 'تربية دينية': 'religion', 'التربية الدينية': 'religion',
-  'فنية': 'art', 'الفنية': 'art', 'تربية فنية': 'art', 'التربية الفنية': 'art', 'فنون': 'art',
-  'كمبيوتر': 'computer', 'الكمبيوتر': 'computer', 'حاسب': 'computer', 'الحاسب': 'computer',
-  'حاسب آلي': 'computer', 'الحاسب الآلي': 'computer', 'الحاسوب': 'computer',
+
+  // total
+  'المجموع': 'total', 'مجموع': 'total', 'المجموع الكلي': 'total',
+  'المجموع الكلى': 'total', 'الاجمالي': 'total', 'الإجمالي': 'total',
+  'الإجمالى': 'total', 'مجموع المواد': 'total',
+
+  // religion
+  'دين': 'religion', 'الدين': 'religion', 'تربية دينية': 'religion',
+  'التربية الدينية': 'religion', 'تربيه دينيه': 'religion',
+
+  // art (includes رسم)
+  'فنية': 'art', 'الفنية': 'art', 'تربية فنية': 'art',
+  'التربية الفنية': 'art', 'فنون': 'art', 'رسم': 'art', 'الرسم': 'art',
+
+  // computer
+  'كمبيوتر': 'computer', 'الكمبيوتر': 'computer', 'حاسب': 'computer',
+  'الحاسب': 'computer', 'حاسب آلي': 'computer', 'الحاسب الآلي': 'computer',
+  'الحاسوب': 'computer', 'تكنولوجيا': 'computer', 'معلومات': 'computer',
 }
 
 const IGNORE_FIELDS = new Set([
+  'المدرسة', 'مدرسة', 'الادارة', 'ادارة', 'الإدارة', 'المديرية',
   'الشعبة', 'شعبة', 'الرقم الوطني', 'رقم قومي', 'الرقم القومي',
-  'الهاتف', 'العمر', 'النسبة', 'نسبة', 'الدرجة', 'التقدير', 'الحالة',
-  'المرحلة', 'الصف', 'المرحله', 'الصف الدراسي',
+  'الرقم القومى', 'رقم قومى', 'الهاتف', 'العمر', 'النسبة', 'نسبة',
+  'الدرجة', 'التقدير', 'الحالة', 'حالة', 'ملاحظات', 'السلوك', 'المواظبة',
+  'التربية الوطنية', 'التربيه الوطنيه',
 ])
 
 const ENGLISH_FIELDS = new Set([
@@ -35,20 +75,56 @@ const ENGLISH_FIELDS = new Set([
 
 function normalizeResult(raw: Record<string, unknown>): Record<string, unknown> {
   const normalized: Record<string, unknown> = {}
+  let algebra = 0
+  let geometry = 0
+  let hasAlgebra = false
+  let hasGeometry = false
 
   for (const [key, value] of Object.entries(raw)) {
     const trimmedKey = key.trim()
     if (ENGLISH_FIELDS.has(trimmedKey)) {
       normalized[trimmedKey] = value
+    } else if (IGNORE_FIELDS.has(trimmedKey)) {
+      // Skip ignored fields
     } else if (ARABIC_TO_ENGLISH[trimmedKey]) {
-      normalized[ARABIC_TO_ENGLISH[trimmedKey]] = value
-    } else if (!IGNORE_FIELDS.has(trimmedKey)) {
+      const mapped = ARABIC_TO_ENGLISH[trimmedKey]
+      if (mapped === '_algebra') {
+        algebra = Number(value) || 0
+        hasAlgebra = true
+      } else if (mapped === '_geometry') {
+        geometry = Number(value) || 0
+        hasGeometry = true
+      } else {
+        normalized[mapped] = value
+      }
+    } else {
       // Try case-insensitive
       const lowerKey = trimmedKey.toLowerCase()
       const match = Object.keys(ARABIC_TO_ENGLISH).find(k => k.toLowerCase() === lowerKey)
       if (match) {
-        normalized[ARABIC_TO_ENGLISH[match]] = value
+        const mapped = ARABIC_TO_ENGLISH[match]
+        if (mapped === '_algebra') {
+          algebra = Number(value) || 0
+          hasAlgebra = true
+        } else if (mapped === '_geometry') {
+          geometry = Number(value) || 0
+          hasGeometry = true
+        } else {
+          normalized[mapped] = value
+        }
       }
+    }
+  }
+
+  // Combine جبر + هندسة into math
+  if (hasAlgebra || hasGeometry) {
+    const existingMath = Number(normalized.math) || 0
+    if (hasAlgebra && hasGeometry) {
+      normalized.math = algebra + geometry
+    } else if (hasAlgebra) {
+      normalized.math = existingMath + algebra
+    } else {
+      normalized.math = existingMath + geometry
     }
   }
 
