@@ -346,13 +346,20 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
                       <div className="relative">
                         <Input
                           type="text"
+                          inputMode="numeric"
                           value={seatNumber}
                           onChange={(e) => {
-                            setSeatNumber(e.target.value);
+                            // Convert Arabic-Indic numerals (٠-٩) to Western (0-9) and clean input
+                            const arabicMap: Record<string, string> = {
+                              '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+                              '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
+                            }
+                            const val = e.target.value.replace(/[٠-٩]/g, (c) => arabicMap[c] || c).replace(/[^0-9]/g, '')
+                            setSeatNumber(val);
                             setError(null);
                           }}
                           onKeyDown={handleKeyPress}
-                          placeholder="أدخل رقم الجلوس"
+                          placeholder="أدخل رقم الجلوس بالأرقام"
                           className="h-12 text-right text-lg pr-4 pl-12 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600"
                           disabled={loading}
                         />

@@ -1,14 +1,31 @@
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
 
+// Convert Arabic-Indic numerals (٠١٢٣٤٥٦٧٨٩) to Western Arabic numerals (0123456789)
+// Also removes whitespace and common Arabic characters that might be typed accidentally
+function normalizeSeatNumber(input: string): string {
+  const arabicNumerals: Record<string, string> = {
+    '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+    '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
+  }
+  // Convert Arabic-Indic numerals to Western
+  let normalized = input.replace(/[٠-٩]/g, (char) => arabicNumerals[char] || char)
+  // Remove any remaining non-digit characters (spaces, Arabic comma, etc.)
+  normalized = normalized.replace(/[^0-9]/g, '')
+  return normalized
+}
+
 // GET /api/exam-results/query - Query a student result by seat number and grade
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const grade = searchParams.get('grade')
     const gradeId = searchParams.get('gradeId')
-    const seat = searchParams.get('seat')
+    const rawSeat = searchParams.get('seat')
     const includeArchived = searchParams.get('archived') === 'true'
+
+    // Normalize seat number: convert Arabic-Indic numerals and clean up
+    const seat = rawSeat ? normalizeSeatNumber(rawSeat) : ''
 
     if (!seat) {
       return NextResponse.json(
@@ -57,9 +74,9 @@ export async function GET(request: Request) {
       )
     }
 
-    // Find the student by seatNumber
+    // Find the student by seatNumber (normalize both sides for comparison)
     const student = examGrade.results.find(
-      (r) => r.seatNumber === seat
+      (r) => normalizeSeatNumber(r.seatNumber) === seat
     )
 
     if (!student) {
