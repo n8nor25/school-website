@@ -422,7 +422,7 @@ function normalizePayload(data: unknown): { grades: { gradeName: string; results
   let grades: { gradeName: string; results: Record<string, unknown>[] }[] = []
   let convertedCount = 0
 
-  // Check for worksheet structure first
+  // Check for worksheet structure first: { "الصف الاول": [...], ... }
   const worksheets = detectWorksheetStructure(data)
   if (worksheets) {
     for (const ws of worksheets) {
@@ -440,8 +440,26 @@ function normalizePayload(data: unknown): { grades: { gradeName: string; results
         results: normalizedResults,
       })
     }
+  } else if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object' && data[0] !== null && 'gradeName' in (data[0] as Record<string, unknown>) && 'results' in (data[0] as Record<string, unknown>)) {
+    // Multi-grade array format: [{ gradeName: "...", results: [...] }, ...]
+    // This is already normalized data - just pass through but re-normalize individual results
+    for (const gradeObj of (data as Record<string, unknown>[])) {
+      const gObj = gradeObj as Record<string, unknown>
+      const gradeName = String(gObj.gradeName || '')
+      const rawResults = Array.isArray(gObj.results) ? gObj.results as Record<string, unknown>[] : []
+      const normalizedResults = rawResults.map((item) => {
+        const normalized = normalizeResult(item)
+        const hasArabicKeys = Object.keys(item).some(k => {
+          const trimmed = k.trim()
+          return ARABIC_TO_ENGLISH[trimmed] && ARABIC_TO_ENGLISH[trimmed] !== '_ignore'
+        })
+        if (hasArabicKeys) convertedCount++
+        return normalized
+      })
+      grades.push({ gradeName, results: normalizedResults })
+    }
   } else if (Array.isArray(data)) {
-    // Simple array of results
+    // Simple array of student results
     const normalizedResults = (data as Record<string, unknown>[]).map((item) => {
       const normalized = normalizeResult(item)
       const hasArabicKeys = Object.keys(item).some(k => {
@@ -756,17 +774,24 @@ export default function ResultsManager() {
     let parsed: unknown
     try {
       parsed = JSON.parse(jsonData)
+    } catch {
+      toast.error('بيانات JSON غير صالحة. تأكد من الصيغة الصحيحة')
+      return
+    }
+
+    try {
       // Re-normalize in case user pasted Arabic JSON directly
       const { grades: parsedGrades } = normalizePayload(parsed)
 
-      if (parsedGrades.length === 0) {
-        toast.error('صيغة البيانات غير صحيحة')
+      if (parsedGrades.length === 0 || parsedGrades.every(g => g.results.length === 0)) {
+        toast.error('صيغة البيانات غير صحيحة - لا توجد نتائج صالحة للرفع')
         return
       }
 
+      setUploading(true)
+
       if (parsedGrades.length > 1 || (parsedGrades.length === 1 && parsedGrades[0].gradeName && !gradeName.trim())) {
         // Multi-grade upload - upload each grade separately
-        setUploading(true)
         let totalUploaded = 0
         let errorCount = 0
 
@@ -802,16 +827,16 @@ export default function ResultsManager() {
               totalUploaded += data.resultsCount
             } else {
               errorCount++
-              const data = await res.json()
-              console.error(`Error uploading ${grade.gradeName}:`, data.error)
+              try { const data = await res.json(); console.error(`Error uploading ${grade.gradeName}:`, data.error) } catch { /* ignore */ }
             }
-          } catch {
+          } catch (err) {
             errorCount++
+            console.error(`Network error uploading ${grade.gradeName}:`, err)
           }
         }
 
         if (totalUploaded > 0) {
-          toast.success(`تم رفع النتائج بنجاح - ${totalUploaded} طالب في ${parsedGrades.length} صفوف`, {
+          toast.success(`تم رفع النتائج بنجاح - ${totalUploaded} طالب في ${parsedGrades.filter(g => g.results.length > 0).length} صفوف`, {
             icon: <CheckCircle className="w-4 h-4 text-emerald-500" />,
           })
           setUploadDialogOpen(false)
@@ -819,8 +844,10 @@ export default function ResultsManager() {
           fetchGrades()
         }
 
-        if (errorCount > 0) {
-          toast.warning(`فشل رفع ${errorCount} صفوف`)
+        if (errorCount > 0 && totalUploaded === 0) {
+          toast.error(`فشل رفع جميع النتائج - تحقق من البيانات وحاول مرة أخرى`)
+        } else if (errorCount > 0) {
+          toast.warning(`تم رفع بعض النتائج لكن فشل رفع ${errorCount} صفوف`)
         }
 
         setUploading(false)
@@ -834,8 +861,15 @@ export default function ResultsManager() {
         results: grade.results as ExamResultEntry[],
       }
 
+      if (!uploadPayload.gradeName) {
+        toast.error('يرجى إدخال اسم الصف')
+        setUploading(false)
+        return
+      }
+
       if (uploadPayload.results.length === 0) {
         toast.error('لا توجد نتائج للرفع')
+        setUploading(false)
         return
       }
 
@@ -843,11 +877,11 @@ export default function ResultsManager() {
       for (let i = 0; i < uploadPayload.results.length; i++) {
         if (!uploadPayload.results[i].seatNumber || !uploadPayload.results[i].studentName) {
           toast.error(`السطر ${i + 1}: رقم الجلوس واسم الطالب مطلوبان`)
+          setUploading(false)
           return
         }
       }
 
-      setUploading(true)
       try {
         const res = await fetch('/api/exam-results', {
           method: 'POST',
@@ -873,9 +907,10 @@ export default function ResultsManager() {
       } finally {
         setUploading(false)
       }
-    } catch {
-      toast.error('بيانات JSON غير صالحة. تأكد من الصيغة الصحيحة')
-      return
+    } catch (error) {
+      console.error('Normalization error:', error)
+      toast.error('حدث خطأ في معالجة البيانات. حاول مرة أخرى')
+      setUploading(false)
     }
   }
 
