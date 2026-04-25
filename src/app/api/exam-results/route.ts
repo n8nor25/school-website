@@ -144,9 +144,13 @@ function normalizeResult(raw: Record<string, unknown>): Record<string, unknown> 
 }
 
 // GET /api/exam-results - List all ExamResultGrade entries with student counts
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const showArchived = searchParams.get('archived') === 'true'
+
     const grades = await db.examResultGrade.findMany({
+      where: showArchived ? {} : { archived: false },
       include: {
         _count: {
           select: { results: true },
@@ -158,6 +162,8 @@ export async function GET() {
     const formatted = grades.map((grade) => ({
       id: grade.id,
       gradeName: grade.gradeName,
+      term: grade.term,
+      archived: grade.archived,
       studentCount: grade._count.results,
       updatedAt: grade.updatedAt,
     }))
@@ -177,6 +183,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     let { gradeName, results } = body
+    const term = body.term || 'الترم الأول'
 
     if (!gradeName || !results || !Array.isArray(results)) {
       return NextResponse.json(
@@ -208,7 +215,7 @@ export async function POST(request: Request) {
 
     // Find or create the ExamResultGrade
     let examGrade = await db.examResultGrade.findFirst({
-      where: { gradeName },
+      where: { gradeName, term },
     })
 
     if (examGrade) {
@@ -224,7 +231,7 @@ export async function POST(request: Request) {
       })
     } else {
       examGrade = await db.examResultGrade.create({
-        data: { gradeName },
+        data: { gradeName, term },
       })
     }
 
@@ -249,6 +256,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       id: examGrade.id,
       gradeName: examGrade.gradeName,
+      term: examGrade.term,
       resultsCount: createdResults.count,
       updatedAt: examGrade.updatedAt,
       message: 'تم رفع النتائج بنجاح',

@@ -205,6 +205,8 @@ model Homework {
 model ExamResultGrade {
   id        String       @id @default(cuid())
   gradeName String
+  term      String       @default("الترم الأول")
+  archived  Boolean      @default(false)
   updatedAt DateTime     @default(now())
   results   ExamResult[]
 }

@@ -47,12 +47,26 @@ import {
   ClipboardPaste,
   X,
   ArrowLeftRight,
+  Archive,
+  ArchiveRestore,
+  Filter,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface ExamResultGrade {
   id: string
   gradeName: string
+  term: string
+  archived: boolean
   studentCount: number
   updatedAt: string
 }
@@ -565,11 +579,15 @@ export default function ResultsManager() {
   const [conversionInfo, setConversionInfo] = useState<string | null>(null)
   const [multiGradeInfo, setMultiGradeInfo] = useState<string | null>(null)
 
+  const [showArchived, setShowArchived] = useState(false)
+  const [termFilter, setTermFilter] = useState<string>('')
+  const [term, setTerm] = useState('الترم الأول')
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchGrades = async () => {
     try {
-      const res = await fetch('/api/exam-results')
+      const res = await fetch(`/api/exam-results?archived=${showArchived}`)
       const data = await res.json()
       if (Array.isArray(data)) {
         setGrades(data)
@@ -598,6 +616,10 @@ export default function ResultsManager() {
     fetchGrades()
   }, [])
 
+  useEffect(() => {
+    fetchGrades()
+  }, [showArchived])
+
   const resetUploadForm = useCallback(() => {
     setGradeName('')
     setJsonData('')
@@ -607,6 +629,7 @@ export default function ResultsManager() {
     setJsonError(null)
     setConversionInfo(null)
     setMultiGradeInfo(null)
+    setTerm('الترم الأول')
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -819,6 +842,7 @@ export default function ResultsManager() {
               body: JSON.stringify({
                 gradeName: grade.gradeName,
                 results: grade.results,
+                term: term,
               }),
             })
 
@@ -856,9 +880,10 @@ export default function ResultsManager() {
 
       // Single grade upload
       const grade = parsedGrades[0]
-      const uploadPayload: UploadPayload = {
+      const uploadPayload: UploadPayload & { term: string } = {
         gradeName: gradeName.trim() || grade.gradeName,
         results: grade.results as ExamResultEntry[],
+        term: term,
       }
 
       if (!uploadPayload.gradeName) {
@@ -961,6 +986,25 @@ export default function ResultsManager() {
     }
   }
 
+  const handleArchive = async (grade: ExamResultGrade, archive: boolean) => {
+    try {
+      const res = await fetch(`/api/exam-results/${grade.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: archive }),
+      })
+      if (res.ok) {
+        toast.success(archive ? 'تم أرشفة النتائج بنجاح' : 'تم استعادة النتائج بنجاح')
+        fetchGrades()
+      } else {
+        const data = await res.json()
+        toast.error(data.error || 'حدث خطأ في التحديث')
+      }
+    } catch {
+      toast.error('حدث خطأ في التحديث')
+    }
+  }
+
   const jsonValidation = validateJsonData(jsonData)
   const canUpload = jsonData.trim() && jsonValidation.valid && (jsonValidation.isMultiGrade || gradeName.trim())
 
@@ -981,6 +1025,14 @@ export default function ResultsManager() {
           <p className="text-gray-500 dark:text-gray-400 mt-1">رفع وإدارة نتائج الطلاب في الامتحانات</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            onClick={() => setShowArchived(!showArchived)}
+            variant={showArchived ? "default" : "outline"}
+            className={`gap-2 ${showArchived ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'border-amber-300 text-amber-600 dark:border-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
+          >
+            {showArchived ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            {showArchived ? 'عرض الحالي' : 'عرض الأرشيف'}
+          </Button>
           <Button
             onClick={handleImportSample}
             disabled={uploading}
@@ -1068,6 +1120,7 @@ export default function ResultsManager() {
                 <TableRow className="bg-gray-50/50 dark:bg-gray-800/30 hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
                   <TableHead className="text-right font-semibold text-gray-600 dark:text-gray-300">#</TableHead>
                   <TableHead className="text-right font-semibold text-gray-600 dark:text-gray-300">اسم الصف</TableHead>
+                  <TableHead className="text-right font-semibold text-gray-600 dark:text-gray-300">الترم</TableHead>
                   <TableHead className="text-right font-semibold text-gray-600 dark:text-gray-300">عدد الطلاب</TableHead>
                   <TableHead className="text-right font-semibold text-gray-600 dark:text-gray-300">آخر تحديث</TableHead>
                   <TableHead className="text-right font-semibold text-gray-600 dark:text-gray-300">الإجراءات</TableHead>
@@ -1075,7 +1128,7 @@ export default function ResultsManager() {
               </TableHeader>
               <TableBody>
                 {grades.map((grade, index) => (
-                  <TableRow key={grade.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                  <TableRow key={grade.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/30 ${grade.archived ? 'opacity-60' : ''}`}>
                     <TableCell className="text-gray-500 dark:text-gray-400 font-medium">
                       {index + 1}
                     </TableCell>
@@ -1085,7 +1138,17 @@ export default function ResultsManager() {
                           <GraduationCap className="w-4 h-4 text-[#2A374E] dark:text-blue-300" />
                         </div>
                         <span className="font-medium text-gray-800 dark:text-white">{grade.gradeName}</span>
+                        {grade.archived && (
+                          <Badge className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 mr-2">
+                            مؤرشف
+                          </Badge>
+                        )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs border-[#2A374E]/30 text-[#2A374E] dark:border-blue-400/30 dark:text-blue-300">
+                        {grade.term}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -1100,17 +1163,29 @@ export default function ResultsManager() {
                       {formatDate(grade.updatedAt)}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        onClick={() => {
-                          setDeletingGrade(grade)
-                          setDeleteDialogOpen(true)
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          onClick={() => handleArchive(grade, !grade.archived)}
+                          variant="ghost"
+                          size="sm"
+                          className={`gap-1 ${grade.archived ? 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20' : 'text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20'}`}
+                          title={grade.archived ? 'استعادة من الأرشيف' : 'أرشفة'}
+                        >
+                          {grade.archived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+                          <span className="text-xs hidden sm:inline">{grade.archived ? 'استعادة' : 'أرشفة'}</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          onClick={() => {
+                            setDeletingGrade(grade)
+                            setDeleteDialogOpen(true)
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -1149,6 +1224,26 @@ export default function ResultsManager() {
               {multiGradeInfo && (
                 <p className="text-xs text-blue-600 dark:text-blue-400">{multiGradeInfo}</p>
               )}
+            </div>
+
+            {/* Term Selection */}
+            <div>
+              <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">
+                الترم الدراسي
+              </Label>
+              <Select
+                value={term}
+                onValueChange={setTerm}
+                dir="rtl"
+              >
+                <SelectTrigger className="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="الترم الأول">الترم الأول</SelectItem>
+                  <SelectItem value="الترم الثانى">الترم الثانى</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Input Mode Switch */}

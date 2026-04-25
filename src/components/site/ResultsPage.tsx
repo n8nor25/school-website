@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import {
   ArrowRight, GraduationCap, Search, AlertCircle, CheckCircle2,
   XCircle, Trophy, TrendingUp, BarChart3, Star, RotateCcw,
-  ChevronDown, Loader2, Award, Users, Percent
+  ChevronDown, Loader2, Award, Users, Percent, Heart, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,6 +28,8 @@ interface GradeOption {
   gradeName: string;
   studentCount: number;
   updatedAt: string;
+  term: string;
+  archived: boolean;
 }
 
 interface SubjectDetail {
@@ -83,6 +85,7 @@ interface QueryResult {
   maxScores: MaxScores;
   passStatus: PassStatus;
   gradeName: string;
+  term: string;
 }
 
 const subjectLabels: Record<string, string> = {
@@ -133,7 +136,7 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
     const fetchGrades = async () => {
       try {
         setGradesLoading(true);
-        const res = await fetch('/api/exam-results');
+        const res = await fetch('/api/exam-results?archived=false');
         if (!res.ok) throw new Error('فشل في تحميل الصفوف');
         const data = await res.json();
         setGrades(data);
@@ -315,6 +318,11 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
                             <SelectItem key={grade.id} value={grade.gradeName}>
                               <div className="flex items-center gap-2">
                                 <span>{grade.gradeName}</span>
+                                {grade.term && (
+                                  <span className="text-xs text-blue-400">
+                                    ({grade.term})
+                                  </span>
+                                )}
                                 <span className="text-xs text-gray-400">
                                   ({grade.studentCount} طالب)
                                 </span>
@@ -451,6 +459,14 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
                           <GraduationCap className="w-4 h-4" />
                           {result.gradeName}
                         </span>
+                        {result.term && (
+                          <>
+                            <span className="text-blue-300">|</span>
+                            <span className="flex items-center gap-1 text-amber-200">
+                              {result.term}
+                            </span>
+                          </>
+                        )}
                         <span className="text-blue-300">|</span>
                         <span>رقم الجلوس: {result.student.seatNumber}</span>
                       </div>
@@ -839,6 +855,61 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
                 </Card>
               </div>
             )}
+
+            {/* Congratulatory / Encouragement Message */}
+            <div className="animate-fade-in-up">
+              {result.passStatus.passed ? (
+                <div className="relative overflow-hidden rounded-2xl border border-amber-200 dark:border-amber-700">
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/10 dark:to-orange-900/20" />
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400" />
+                  <div className="relative p-6 text-center">
+                    <div className="flex justify-center gap-2 mb-3">
+                      <Sparkles className="w-6 h-6 text-amber-500 animate-pulse" />
+                      <Sparkles className="w-8 h-8 text-yellow-500 animate-pulse" style={{ animationDelay: '0.5s' }} />
+                      <Sparkles className="w-6 h-6 text-amber-500 animate-pulse" style={{ animationDelay: '1s' }} />
+                    </div>
+                    <h4 className="text-xl font-bold text-amber-700 dark:text-amber-300 mb-2">
+                      🎉 كل التهاني والتبريكات! 🎉
+                    </h4>
+                    <p className="text-amber-600 dark:text-amber-400 text-base leading-relaxed mb-3">
+                      بنتيجتك المتميزة، أسأل الله لك دوام التوفيق والنجاح
+                      <br />
+                      في مسيرتك الدراسية وحياتك القادمة
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-amber-500 dark:text-amber-400">
+                      <Heart className="w-4 h-4 fill-amber-500" />
+                      <span className="text-sm font-medium">من تصميم الموقع</span>
+                      <Heart className="w-4 h-4 fill-amber-500" />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="relative overflow-hidden rounded-2xl border border-blue-200 dark:border-blue-700">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/10 dark:to-purple-900/20" />
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400" />
+                  <div className="relative p-6 text-center">
+                    <div className="flex justify-center gap-2 mb-3">
+                      <Sparkles className="w-6 h-6 text-blue-500 animate-pulse" />
+                      <Sparkles className="w-8 h-8 text-indigo-500 animate-pulse" style={{ animationDelay: '0.5s' }} />
+                      <Sparkles className="w-6 h-6 text-blue-500 animate-pulse" style={{ animationDelay: '1s' }} />
+                    </div>
+                    <h4 className="text-xl font-bold text-blue-700 dark:text-blue-300 mb-2">
+                      لا تيأس، فكل نجاح يبدأ بخطوة 💪
+                    </h4>
+                    <p className="text-blue-600 dark:text-blue-400 text-base leading-relaxed mb-3">
+                      اجعل هذه التجربة دافعاً للتميز في المرة القادمة
+                      <br />
+                      نؤمن بك وبقدراتك، والمستقبل بين يديك
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-blue-500 dark:text-blue-400">
+                      <Heart className="w-4 h-4 fill-blue-500" />
+                      <span className="text-sm font-medium">من تصميم الموقع</span>
+                      <Heart className="w-4 h-4 fill-blue-500" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Footer Note */}
             <div className="mt-8 mb-4 animate-fade-in-up">

@@ -7,6 +7,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const grade = searchParams.get('grade')
     const seat = searchParams.get('seat')
+    const includeArchived = searchParams.get('archived') === 'true'
 
     if (!grade || !seat) {
       return NextResponse.json(
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
 
     // Find the ExamResultGrade by gradeName
     const examGrade = await db.examResultGrade.findFirst({
-      where: { gradeName: grade },
+      where: { gradeName: grade, archived: includeArchived ? undefined : false },
       include: {
         results: true,
       },
@@ -130,6 +131,7 @@ export async function GET(request: Request) {
         },
       },
       gradeName: examGrade.gradeName,
+      term: examGrade.term,
     })
   } catch (error) {
     console.error('Error querying exam result:', error)
