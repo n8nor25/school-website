@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,10 +41,11 @@ import {
   GraduationCap,
   Users,
   Clock,
-  Plus,
   AlertCircle,
   CheckCircle,
   FileUp,
+  ClipboardPaste,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -111,7 +112,7 @@ export default function ResultsManager() {
   const [inputMode, setInputMode] = useState<'json' | 'file'>('file')
   const [selectedFileName, setSelectedFileName] = useState('')
   const [fileReadSuccess, setFileReadSuccess] = useState(false)
-  const [dragOver, setDragOver] = useState(false)
+  const [jsonError, setJsonError] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -147,48 +148,27 @@ export default function ResultsManager() {
     fetchGrades()
   }, [])
 
-  const resetUploadForm = () => {
+  const resetUploadForm = useCallback(() => {
     setGradeName('')
     setJsonData('')
     setInputMode('file')
     setSelectedFileName('')
     setFileReadSuccess(false)
-    setDragOver(false)
+    setJsonError(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
-  }
+  }, [])
 
   const openUploadDialog = () => {
     resetUploadForm()
     setUploadDialogOpen(true)
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragOver(true)
-  }
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragOver(false)
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragOver(false)
-    const file = e.dataTransfer.files?.[0]
-    if (file) {
-      processFile(file)
-    }
-  }
-
   const processFile = async (file: File) => {
     setSelectedFileName(file.name)
     setFileReadSuccess(false)
+    setJsonError(null)
 
     try {
       const text = await file.text()
@@ -197,6 +177,7 @@ export default function ResultsManager() {
       try {
         parsed = JSON.parse(text)
       } catch {
+        setJsonError('فشل في تحليل الملف. تأكد من أنه ملف JSON صالح')
         toast.error('فشل في تحليل الملف. تأكد من أنه ملف JSON صالح')
         return
       }
@@ -210,6 +191,7 @@ export default function ResultsManager() {
           toast.success(`تم قراءة الملف بنجاح - ${obj.results.length} طالب`)
         } else {
           setJsonData(text)
+          setJsonError('الملف لا يحتوي على مصفوفة results صالحة')
           toast.error('الملف لا يحتوي على مصفوفة results صالحة')
         }
       } else if (Array.isArray(parsed)) {
@@ -218,11 +200,13 @@ export default function ResultsManager() {
         toast.success(`تم قراءة الملف بنجاح - ${parsed.length} طالب`)
       } else {
         setJsonData(text)
+        setJsonError('صيغة الملف غير صحيحة')
         toast.error('صيغة الملف غير صحيحة')
       }
 
       setInputMode('json') // Switch to JSON view to show the parsed data
     } catch {
+      setJsonError('فشل في قراءة الملف. تأكد من أنه ملف JSON صالح')
       toast.error('فشل في قراءة الملف. تأكد من أنه ملف JSON صالح')
     }
 
@@ -232,13 +216,34 @@ export default function ResultsManager() {
     }
   }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    await processFile(file)
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+    processFile(file)
+  }
+
+  // Validate JSON data in real-time
+  const validateJsonData = (data: string): { valid: boolean; error: string | null; resultCount: number } => {
+    if (!data.trim()) {
+      return { valid: false, error: null, resultCount: 0 }
+    }
+    try {
+      const parsed = JSON.parse(data)
+      if (parsed.results && Array.isArray(parsed.results)) {
+        return { valid: true, error: null, resultCount: parsed.results.length }
+      } else if (Array.isArray(parsed)) {
+        return { valid: true, error: null, resultCount: parsed.length }
+      } else {
+        return { valid: false, error: 'صيغة البيانات غير صحيحة. يجب أن تحتوي على مصفوفة results', resultCount: 0 }
+      }
+    } catch (e) {
+      const errorMsg = e instanceof Error ? e.message : 'خطأ في صيغة JSON'
+      // Find the position of the error
+      const posMatch = errorMsg.match(/position (\d+)/i)
+      if (posMatch) {
+        return { valid: false, error: `خطأ في صيغة JSON عند الموضع ${posMatch[1]}`, resultCount: 0 }
+      }
+      return { valid: false, error: 'بيانات JSON غير صالحة', resultCount: 0 }
     }
   }
 
@@ -362,6 +367,10 @@ export default function ResultsManager() {
       fetchGrades()
     }
   }
+
+  // Real-time JSON validation
+  const jsonValidation = validateJsonData(jsonData)
+  const canUpload = gradeName.trim() && jsonData.trim() && jsonValidation.valid
 
   if (loading) {
     return (
@@ -528,7 +537,7 @@ export default function ResultsManager() {
               رفع نتائج امتحانات
             </DialogTitle>
             <DialogDescription>
-              أدخل بيانات النتائج بصيغة JSON أو ارفع ملف JSON
+              أدخل بيانات النتائج بصيغة JSON أو ارفع ملف JSON من جهازك
             </DialogDescription>
           </DialogHeader>
 
@@ -563,7 +572,7 @@ export default function ResultsManager() {
                   }
                 >
                   <FileUp className="w-4 h-4 ml-1" />
-                  رفع ملف JSON
+                  رفع ملف
                 </Button>
                 <Button
                   type="button"
@@ -576,52 +585,46 @@ export default function ResultsManager() {
                       : 'border-gray-300 dark:border-gray-600'
                   }
                 >
+                  <ClipboardPaste className="w-4 h-4 ml-1" />
                   لصق JSON
                 </Button>
               </div>
             </div>
 
-            {/* File Upload Mode */}
+            {/* File Upload Mode - Using label for reliable cross-browser support */}
             {inputMode === 'file' ? (
               <div className="space-y-3">
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer ${
-                    dragOver
-                      ? 'border-[#2A374E] bg-[#2A374E]/5 dark:bg-[#2A374E]/10 scale-[1.02]'
-                      : 'border-gray-300 dark:border-gray-600 hover:border-[#2A374E]/50 dark:hover:border-blue-400/50'
-                  }`}
-                  onClick={() => fileInputRef.current?.click()}
+                {/* 
+                  Using a <label> with htmlFor is the most reliable cross-browser approach
+                  for triggering file inputs, especially on mobile devices (iOS Safari).
+                  The hidden file input uses sr-only instead of display:none to remain
+                  accessible and clickable by the browser.
+                */}
+                <input
+                  ref={fileInputRef}
+                  id="results-file-input"
+                  type="file"
+                  accept=".json,application/json,text/plain,.txt"
+                  className="sr-only"
+                  onChange={handleFileChange}
+                />
+                <label
+                  htmlFor="results-file-input"
+                  className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer hover:border-[#2A374E]/50 dark:hover:border-blue-400/50 hover:bg-[#2A374E]/5 dark:hover:bg-[#2A374E]/10 active:scale-[0.98]"
                 >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".json"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                  />
-                  <FileSpreadsheet className={`w-12 h-12 mx-auto mb-3 transition-colors ${dragOver ? 'text-[#2A374E] dark:text-blue-300' : 'text-gray-400'}`} />
+                  <FileSpreadsheet className="w-12 h-12 mx-auto mb-3 text-gray-400" />
                   <p className="text-gray-600 dark:text-gray-300 font-medium mb-1">
-                    {dragOver ? 'أفلت الملف هنا' : 'ارفع ملف JSON'}
+                    ارفع ملف JSON من جهازك
                   </p>
                   <p className="text-gray-400 text-sm mb-4">
-                    {dragOver ? 'سيتم قراءة الملف تلقائياً' : 'اسحب الملف هنا أو اضغط للاختيار'}
+                    اضغط هنا لاختيار ملف النتائج
                   </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      fileInputRef.current?.click()
-                    }}
-                    className="gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2A374E] text-white text-sm font-medium hover:bg-[#1e2a3d] transition-colors">
+                    <Upload className="w-4 h-4" />
                     اختيار ملف
-                  </Button>
-                </div>
+                  </span>
+                </label>
+
                 {fileReadSuccess && (
                   <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -655,13 +658,36 @@ export default function ResultsManager() {
             ) : (
               /* JSON Paste Mode */
               <div className="space-y-2">
-                <Label htmlFor="json-data" className="font-medium">
-                  بيانات JSON <span className="text-red-500">*</span>
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="json-data" className="font-medium">
+                    بيانات JSON <span className="text-red-500">*</span>
+                  </Label>
+                  {jsonData && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-7 text-red-500 hover:text-red-700"
+                      onClick={() => {
+                        setJsonData('')
+                        setJsonError(null)
+                        setFileReadSuccess(false)
+                        setSelectedFileName('')
+                      }}
+                    >
+                      <X className="w-3 h-3 ml-1" />
+                      مسح
+                    </Button>
+                  )}
+                </div>
                 <Textarea
                   id="json-data"
                   value={jsonData}
-                  onChange={(e) => setJsonData(e.target.value)}
+                  onChange={(e) => {
+                    setJsonData(e.target.value)
+                    setJsonError(null)
+                    setFileReadSuccess(false)
+                  }}
                   placeholder={`{
   "gradeName": "الأول الإعدادي",
   "results": [
@@ -684,10 +710,30 @@ export default function ResultsManager() {
                   className="font-mono text-sm text-left direction-ltr"
                   dir="ltr"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  الصيغة المطلوبة: كائن JSON يحتوي على gradeName ومصفوفة results
-                </p>
+                {/* Real-time validation feedback */}
+                {jsonData.trim() && (
+                  <div className="mt-1">
+                    {jsonValidation.valid ? (
+                      <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium">
+                          صيغة JSON صالحة - {jsonValidation.resultCount} طالب
+                        </span>
+                      </div>
+                    ) : jsonValidation.error ? (
+                      <div className="flex items-center gap-1.5 text-red-500">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium">{jsonValidation.error}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+                {!jsonData.trim() && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    الصيغة المطلوبة: كائن JSON يحتوي على gradeName ومصفوفة results
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -698,8 +744,8 @@ export default function ResultsManager() {
             </Button>
             <Button
               onClick={handleUpload}
-              disabled={uploading || !gradeName.trim() || !jsonData.trim()}
-              className="bg-[#2A374E] hover:bg-[#1e2a3d] text-white gap-2"
+              disabled={uploading || !canUpload}
+              className="bg-[#2A374E] hover:bg-[#1e2a3d] text-white gap-2 min-w-[140px]"
             >
               {uploading ? (
                 <>

@@ -24,3 +24,28 @@ Stage Summary:
 - Contact: proper WhatsApp SVG icon with green styling
 - Archive: full archive/restore functionality in all 4 content managers
 - Chat: verified working correctly with z-ai-web-dev-sdk
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix student results upload button not working
+
+Work Log:
+- Analyzed the uploaded screenshot using VLM - identified "1 Issue" validation error in the upload dialog
+- Tested the backend API (/api/exam-results POST) - confirmed it works correctly
+- Identified the root cause: the file upload mechanism used `hidden` class with JavaScript-triggered click (`fileInputRef.current?.click()`), which doesn't work reliably on mobile devices (especially iOS Safari) because browsers require file inputs to be triggered by direct user gestures
+- The upload button was also disabled when jsonData was empty (`disabled={uploading || !gradeName.trim() || !jsonData.trim()}`), creating a deadlock where the file input couldn't be triggered and the button remained disabled
+- Rewrote the ResultsManager component with these fixes:
+  1. Replaced hidden file input + JS click with `<label htmlFor>` approach (most reliable cross-browser)
+  2. Changed file input class from `hidden` to `sr-only` (keeps input accessible)
+  3. Broadened file acceptance from `.json` to `.json,application/json,text/plain,.txt`
+  4. Added real-time JSON validation with visual feedback
+  5. Added clear button for JSON data
+  6. Added active state touch feedback on upload area
+  7. Improved error messages with position info for JSON parse errors
+
+Stage Summary:
+- The upload button now uses a label-based approach that works on all devices
+- Real-time validation shows green checkmark for valid JSON with student count
+- Red error messages appear immediately for invalid JSON
+- The upload dialog is more user-friendly with clear feedback
+- No compilation errors, lint passes clean
