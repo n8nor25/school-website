@@ -49,3 +49,41 @@ Stage Summary:
 - Red error messages appear immediately for invalid JSON
 - The upload dialog is more user-friendly with clear feedback
 - No compilation errors, lint passes clean
+
+---
+Task ID: 1-4
+Agent: Main Agent
+Task: Fix Arabic column name auto-mapping + implement correct passing criteria for student results
+
+Work Log:
+- Analyzed the screenshot showing Arabic column names ("الرقم", "الاسم", "عربي", etc.) in the upload JSON that the system couldn't process
+- Added comprehensive ARABIC_TO_ENGLISH mapping dictionary with 60+ Arabic column name variants covering:
+  - seatNumber: رقم الجلوس, الرقم, رقم, جلسة
+  - studentName: اسم الطالب, الاسم, اسم
+  - arabic: عربي, اللغة العربية, لغة عربية
+  - english: انجليزي, اللغة الإنجليزية, لغة انجليزية
+  - social: دراسات, الدراسات الاجتماعية, اجتماعيات
+  - math: رياضيات, الرياضيات, حساب
+  - science: علوم, العلوم
+  - total: المجموع, مجموع, الإجمالي
+  - religion: دين, التربية الدينية
+  - art: فنية, التربية الفنية, فنون
+  - computer: كمبيوتر, الحاسب الآلي, حاسب آلي
+  - Plus ignore fields: الشعبة, الرقم الوطني, العمر, النسبة, etc.
+- Implemented normalizeResult() and normalizePayload() functions in both frontend and backend
+- Added auto-calculate total when total field is missing or zero
+- Fixed passing criteria in query API:
+  - Condition 1: totalPass = studentAddedTotal >= 50% of maxAddedTotal (sum of added subject max scores)
+  - Condition 2: addedSubjectPass = each added subject score >= 50% of its max
+  - Condition 3: notAddedSubjectPass = each not-added subject score >= 50% of its max
+  - Final: passed = totalPass AND addedSubjectPass AND notAddedSubjectPass
+- Updated ResultsPage.tsx to display new fields (studentAddedTotal, maxAddedTotal)
+- Updated pass/fail breakdown to show clear Arabic descriptions of each condition
+- Tested Arabic column upload via API - successful conversion and storage
+- Tested query with passing criteria - all fields returned correctly
+
+Stage Summary:
+- Arabic column names auto-convert to English in both frontend and backend
+- Passing criteria correctly implements: 50% per subject + 50% added total + pass non-added subjects
+- Files modified: ResultsManager.tsx, exam-results/route.ts, exam-results/query/route.ts, ResultsPage.tsx
+- All lint checks pass, compilation successful, API tests pass

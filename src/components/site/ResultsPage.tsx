@@ -44,6 +44,8 @@ interface PassStatus {
   addedSubjectPass: boolean;
   notAddedSubjectPass: boolean;
   minPassingPercent: number;
+  studentAddedTotal: number;
+  maxAddedTotal: number;
   subjectDetails: {
     added: SubjectDetail[];
     notAdded: SubjectDetail[];
@@ -201,11 +203,11 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
   // Compute statistics from result
   const computeStats = () => {
     if (!result) return null;
-    const { student, maxScores } = result;
+    const { student, maxScores, passStatus } = result;
     const totalMax = maxScores.total || 1;
     const totalPercent = Math.round((student.total / totalMax) * 100);
 
-    const addedSubjects = result.passStatus.subjectDetails.added;
+    const addedSubjects = passStatus.subjectDetails.added;
     const avgAdded = addedSubjects.length > 0
       ? Math.round(addedSubjects.reduce((sum, s) => sum + (s.max > 0 ? (s.score / s.max) * 100 : 0), 0) / addedSubjects.length)
       : 0;
@@ -216,9 +218,15 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
       return pB - pA;
     })[0];
 
+    // Calculate added total percentage using the new fields
+    const addedTotalPercent = passStatus.maxAddedTotal > 0
+      ? Math.round((passStatus.studentAddedTotal / passStatus.maxAddedTotal) * 100)
+      : 0;
+
     return {
       totalPercent,
       avgAdded,
+      addedTotalPercent,
       highestSubject: highestSubject ? {
         name: subjectLabels[highestSubject.subject] || highestSubject.subject,
         percent: Math.round(highestSubject.max > 0 ? (highestSubject.score / highestSubject.max) * 100 : 0),
@@ -751,6 +759,7 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
 
                       {/* Detailed pass/fail breakdown */}
                       <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* شرط 1: نصف مجموع المواد المضافة */}
                         <div className={`rounded-xl p-3 border ${
                           result.passStatus.totalPass
                             ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800'
@@ -767,14 +776,15 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
                                 ? 'text-emerald-700 dark:text-emerald-400'
                                 : 'text-red-700 dark:text-red-400'
                             }`}>
-                              المجموع: {result.passStatus.totalPass ? 'ناجح' : 'راسب'}
+                              مجموع المواد: {result.passStatus.totalPass ? 'ناجح' : 'راسب'}
                             </span>
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 mr-7">
-                            الحد الأدنى {result.passStatus.minPassingPercent}% من المجموع
+                            {result.passStatus.studentAddedTotal} من {result.passStatus.maxAddedTotal} ≥ {result.passStatus.minPassingPercent}%
                           </p>
                         </div>
 
+                        {/* شرط 2: النجاح في كل مادة مضافة */}
                         <div className={`rounded-xl p-3 border ${
                           result.passStatus.addedSubjectPass
                             ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800'
@@ -795,10 +805,11 @@ export default function ResultsPage({ onBack }: ResultsPageProps) {
                             </span>
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 mr-7">
-                            جميع المواد الأساسية ≥ {result.passStatus.minPassingPercent}%
+                            كل مادة أساسية ≥ {result.passStatus.minPassingPercent}% من العظمى
                           </p>
                         </div>
 
+                        {/* شرط 3: النجاح في المواد غير المضافة */}
                         <div className={`rounded-xl p-3 border ${
                           result.passStatus.notAddedSubjectPass
                             ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800'

@@ -56,15 +56,16 @@ export async function GET(request: Request) {
       total: Math.max(...allResults.map((r) => r.total)),
     }
 
-    // Subjects added to total
+    // Subjects added to total (المواد المضافة للمجموع)
     const addedSubjects = ['arabic', 'english', 'social', 'math', 'science'] as const
-    // Subjects not added to total
+    // Subjects not added to total (المواد غير المضافة للمجموع)
     const notAddedSubjects = ['religion', 'art', 'computer'] as const
 
     // Min passing: 50% of max for each subject
     const minPassingPercent = 0.5
 
-    // Compute passing thresholds
+    // === معايير النجاح ===
+    // 1. النجاح في كل مادة مضافة: درجة الطالب ≥ 50% من الدرجة العظمى
     const addedSubjectPass = addedSubjects.every(
       (subject) => {
         const maxScore = maxScores[subject]
@@ -72,6 +73,7 @@ export async function GET(request: Request) {
       }
     )
 
+    // 2. النجاح في المواد غير المضافة: درجة الطالب ≥ 50% من الدرجة العظمى
     const notAddedSubjectPass = notAddedSubjects.every(
       (subject) => {
         const maxScore = maxScores[subject]
@@ -79,9 +81,12 @@ export async function GET(request: Request) {
       }
     )
 
-    // Total pass: student total >= 50% of max total
-    const totalPass = maxScores.total === 0 || student.total >= maxScores.total * minPassingPercent
+    // 3. نصف مجموع المواد المضافة: مجموع الطالب ≥ 50% من مجموع الدرجات العظمى للمواد المضافة
+    const maxAddedTotal = addedSubjects.reduce((sum, subject) => sum + maxScores[subject], 0)
+    const studentAddedTotal = addedSubjects.reduce((sum, subject) => sum + student[subject], 0)
+    const totalPass = maxAddedTotal === 0 || studentAddedTotal >= maxAddedTotal * minPassingPercent
 
+    // النجاح النهائي: تحقيق جميع الشروط
     const passed = totalPass && addedSubjectPass && notAddedSubjectPass
 
     return NextResponse.json({
@@ -105,6 +110,8 @@ export async function GET(request: Request) {
         addedSubjectPass,
         notAddedSubjectPass,
         minPassingPercent: minPassingPercent * 100,
+        studentAddedTotal,
+        maxAddedTotal,
         subjectDetails: {
           added: addedSubjects.map((subject) => ({
             subject,

@@ -46,6 +46,7 @@ import {
   FileUp,
   ClipboardPaste,
   X,
+  ArrowLeftRight,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -83,6 +84,217 @@ const sampleData: UploadPayload = {
   ],
 }
 
+// ===== Arabic-to-English column mapping =====
+// Supports all common Arabic column names used in Egyptian school results
+const ARABIC_TO_ENGLISH: Record<string, string> = {
+  // seatNumber - رقم الجلوس
+  'رقم الجلوس': 'seatNumber',
+  'الرقم': 'seatNumber',
+  'رقم': 'seatNumber',
+  'جلسة': 'seatNumber',
+  'رقم الجلوس/الرقم القومي': 'seatNumber',
+  'رقم الجلوس / الرقم القومي': 'seatNumber',
+  // studentName - اسم الطالب
+  'اسم الطالب': 'studentName',
+  'الاسم': 'studentName',
+  'اسم': 'studentName',
+  'اسم الطالب بالكامل': 'studentName',
+  'إسم الطالب': 'studentName',
+  // arabic - اللغة العربية
+  'عربي': 'arabic',
+  'العربي': 'arabic',
+  'لغة عربية': 'arabic',
+  'اللغة العربية': 'arabic',
+  'العربية': 'arabic',
+  'لغه عربيه': 'arabic',
+  'لغه عربية': 'arabic',
+  'لغة عربيه': 'arabic',
+  // english - اللغة الإنجليزية
+  'انجليزي': 'english',
+  'الانجليزي': 'english',
+  'الإنجليزي': 'english',
+  'لغة انجليزية': 'english',
+  'اللغة الإنجليزية': 'english',
+  'اللغة الانجليزية': 'english',
+  'لغه انجليزيه': 'english',
+  'انجليزية': 'english',
+  'انجليزيه': 'english',
+  // social - الدراسات الاجتماعية
+  'دراسات': 'social',
+  'الدراسات': 'social',
+  'دراسات اجتماعية': 'social',
+  'الدراسات الاجتماعية': 'social',
+  'اجتماعيات': 'social',
+  'الاجتماعيات': 'social',
+  'دراسات اجتماعيه': 'social',
+  // math - الرياضيات
+  'رياضيات': 'math',
+  'الرياضيات': 'math',
+  'رياضه': 'math',
+  'الرياضة': 'math',
+  'حساب': 'math',
+  'الحساب': 'math',
+  // science - العلوم
+  'علوم': 'science',
+  'العلوم': 'science',
+  'العوم': 'science',
+  // total - المجموع
+  'المجموع': 'total',
+  'مجموع': 'total',
+  'المجموع الكلي': 'total',
+  'الاجمالي': 'total',
+  'الإجمالي': 'total',
+  'مجموع المواد': 'total',
+  // religion - التربية الدينية
+  'دين': 'religion',
+  'الدين': 'religion',
+  'تربية دينية': 'religion',
+  'التربية الدينية': 'religion',
+  'تربيه دينيه': 'religion',
+  'ديني': 'religion',
+  'الدينية': 'religion',
+  // art - التربية الفنية
+  'فنية': 'art',
+  'الفنية': 'art',
+  'تربية فنية': 'art',
+  'التربية الفنية': 'art',
+  'تربيه فنيه': 'art',
+  'فنون': 'art',
+  'الفنون': 'art',
+  // computer - الحاسب الآلي
+  'كمبيوتر': 'computer',
+  'الكمبيوتر': 'computer',
+  'حاسب': 'computer',
+  'الحاسب': 'computer',
+  'حاسب آلي': 'computer',
+  'الحاسب الآلي': 'computer',
+  'الحاسوب': 'computer',
+  'تكنولوجيا': 'computer',
+  'تكنولوجيا المعلومات': 'computer',
+  // gradeName - المرحلة/الصف
+  'المرحلة': 'gradeName',
+  'الصف': 'gradeName',
+  'المرحله': 'gradeName',
+  'الصف الدراسي': 'gradeName',
+  // Other fields that should be ignored
+  'الشعبة': '_ignore',
+  'شعبة': '_ignore',
+  'الشعبه': '_ignore',
+  'الرقم الوطني': '_ignore',
+  'رقم قومي': '_ignore',
+  'الرقم القومي': '_ignore',
+  'الهاتف': '_ignore',
+  'العمر': '_ignore',
+  'النسبة': '_ignore',
+  'نسبة': '_ignore',
+  'الدرجة': '_ignore',
+  'درجة': '_ignore',
+  'التقدير': '_ignore',
+  'الحالة': '_ignore',
+  'حالة': '_ignore',
+}
+
+/**
+ * Normalize a single result object: convert Arabic keys to English
+ */
+function normalizeResult(raw: Record<string, unknown>): Record<string, unknown> {
+  const normalized: Record<string, unknown> = {}
+
+  for (const [key, value] of Object.entries(raw)) {
+    const trimmedKey = key.trim()
+    // Check if key is already an English field name
+    if (['seatNumber', 'studentName', 'arabic', 'english', 'social', 'math', 'science', 'total', 'religion', 'art', 'computer', 'gradeName'].includes(trimmedKey)) {
+      normalized[trimmedKey] = value
+    } else if (ARABIC_TO_ENGLISH[trimmedKey]) {
+      const mapped = ARABIC_TO_ENGLISH[trimmedKey]
+      if (mapped !== '_ignore') {
+        normalized[mapped] = value
+      }
+    } else {
+      // Try case-insensitive match
+      const lowerKey = trimmedKey.toLowerCase()
+      const match = Object.keys(ARABIC_TO_ENGLISH).find(k => k.toLowerCase() === lowerKey)
+      if (match && ARABIC_TO_ENGLISH[match] !== '_ignore') {
+        normalized[ARABIC_TO_ENGLISH[match]] = value
+      }
+      // If no match, keep the original key (might be useful data)
+    }
+  }
+
+  return normalized
+}
+
+/**
+ * Normalize an entire upload payload (array or object with results)
+ * Converts Arabic column names to English automatically
+ */
+function normalizePayload(data: unknown): { gradeName: string; results: Record<string, unknown>[]; convertedCount: number } {
+  let results: Record<string, unknown>[] = []
+  let extractedGradeName = ''
+  let convertedCount = 0
+
+  if (Array.isArray(data)) {
+    results = data as Record<string, unknown>[]
+  } else if (data && typeof data === 'object') {
+    const obj = data as Record<string, unknown>
+    if (obj.results && Array.isArray(obj.results)) {
+      results = obj.results as Record<string, unknown>[]
+      if (obj.gradeName) extractedGradeName = String(obj.gradeName)
+    } else {
+      // Maybe it's a single result object
+      results = [obj]
+    }
+  }
+
+  // Check if conversion is needed and normalize
+  const normalizedResults = results.map((item) => {
+    const original = { ...item }
+    const normalized = normalizeResult(original)
+
+    // Check if any Arabic key was converted
+    const hasArabicKeys = Object.keys(original).some(k => {
+      const trimmed = k.trim()
+      return ARABIC_TO_ENGLISH[trimmed] && ARABIC_TO_ENGLISH[trimmed] !== '_ignore'
+    })
+    if (hasArabicKeys) convertedCount++
+
+    return normalized
+  })
+
+  // Try to extract gradeName from the first result if not provided
+  if (!extractedGradeName && normalizedResults.length > 0 && normalizedResults[0].gradeName) {
+    extractedGradeName = String(normalizedResults[0].gradeName)
+  }
+
+  // Remove gradeName from individual results
+  const cleanResults = normalizedResults.map(({ gradeName: _gn, ...rest }) => rest)
+
+  return {
+    gradeName: extractedGradeName,
+    results: cleanResults,
+    convertedCount,
+  }
+}
+
+/**
+ * Auto-calculate total if missing or zero
+ */
+function autoCalculateTotal(result: Record<string, unknown>): Record<string, unknown> {
+  const addedSubjects = ['arabic', 'english', 'social', 'math', 'science'] as const
+  const currentTotal = Number(result.total) || 0
+
+  if (currentTotal === 0) {
+    const calculatedTotal = addedSubjects.reduce((sum, subject) => {
+      return sum + (Number(result[subject]) || 0)
+    }, 0)
+    if (calculatedTotal > 0) {
+      return { ...result, total: calculatedTotal }
+    }
+  }
+
+  return result
+}
+
 function formatDate(dateString: string): string {
   try {
     const date = new Date(dateString)
@@ -113,6 +325,7 @@ export default function ResultsManager() {
   const [selectedFileName, setSelectedFileName] = useState('')
   const [fileReadSuccess, setFileReadSuccess] = useState(false)
   const [jsonError, setJsonError] = useState<string | null>(null)
+  const [conversionInfo, setConversionInfo] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -130,7 +343,6 @@ export default function ResultsManager() {
     }
   }
 
-  // Prevent browser from opening dropped files at document level
   useEffect(() => {
     const preventDefaults = (e: DragEvent) => {
       e.preventDefault()
@@ -155,6 +367,7 @@ export default function ResultsManager() {
     setSelectedFileName('')
     setFileReadSuccess(false)
     setJsonError(null)
+    setConversionInfo(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -165,10 +378,45 @@ export default function ResultsManager() {
     setUploadDialogOpen(true)
   }
 
+  const processParsedData = (parsed: unknown) => {
+    // Normalize Arabic columns to English
+    const { gradeName: extractedGrade, results: normalizedResults, convertedCount } = normalizePayload(parsed)
+
+    // Auto-calculate totals for results that don't have total
+    const finalResults = normalizedResults.map(autoCalculateTotal)
+
+    // Set grade name
+    if (extractedGrade && !gradeName) {
+      setGradeName(extractedGrade)
+    }
+
+    // Build the final payload
+    const payload = {
+      gradeName: extractedGrade || gradeName,
+      results: finalResults,
+    }
+
+    setJsonData(JSON.stringify(payload, null, 2))
+    setFileReadSuccess(true)
+
+    if (convertedCount > 0) {
+      setConversionInfo(`تم تحويل ${convertedCount} سجل من الأعمدة العربية إلى الإنجليزية تلقائياً`)
+      toast.success(`تم قراءة الملف وتحويل الأعمدة تلقائياً - ${finalResults.length} طالب`, {
+        description: 'تم تحويل أسماء الأعمدة العربية إلى الإنجليزية',
+        duration: 5000,
+      })
+    } else {
+      toast.success(`تم قراءة الملف بنجاح - ${finalResults.length} طالب`)
+    }
+
+    setInputMode('json')
+  }
+
   const processFile = async (file: File) => {
     setSelectedFileName(file.name)
     setFileReadSuccess(false)
     setJsonError(null)
+    setConversionInfo(null)
 
     try {
       const text = await file.text()
@@ -182,35 +430,12 @@ export default function ResultsManager() {
         return
       }
 
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && 'gradeName' in (parsed as Record<string, unknown>)) {
-        const obj = parsed as { gradeName?: string; results?: unknown[] }
-        setGradeName(obj.gradeName || '')
-        if (obj.results && Array.isArray(obj.results)) {
-          setJsonData(JSON.stringify(parsed, null, 2))
-          setFileReadSuccess(true)
-          toast.success(`تم قراءة الملف بنجاح - ${obj.results.length} طالب`)
-        } else {
-          setJsonData(text)
-          setJsonError('الملف لا يحتوي على مصفوفة results صالحة')
-          toast.error('الملف لا يحتوي على مصفوفة results صالحة')
-        }
-      } else if (Array.isArray(parsed)) {
-        setJsonData(JSON.stringify({ gradeName: gradeName || '', results: parsed }, null, 2))
-        setFileReadSuccess(true)
-        toast.success(`تم قراءة الملف بنجاح - ${parsed.length} طالب`)
-      } else {
-        setJsonData(text)
-        setJsonError('صيغة الملف غير صحيحة')
-        toast.error('صيغة الملف غير صحيحة')
-      }
-
-      setInputMode('json') // Switch to JSON view to show the parsed data
+      processParsedData(parsed)
     } catch {
       setJsonError('فشل في قراءة الملف. تأكد من أنه ملف JSON صالح')
       toast.error('فشل في قراءة الملف. تأكد من أنه ملف JSON صالح')
     }
 
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -222,7 +447,6 @@ export default function ResultsManager() {
     processFile(file)
   }
 
-  // Validate JSON data in real-time
   const validateJsonData = (data: string): { valid: boolean; error: string | null; resultCount: number } => {
     if (!data.trim()) {
       return { valid: false, error: null, resultCount: 0 }
@@ -230,6 +454,13 @@ export default function ResultsManager() {
     try {
       const parsed = JSON.parse(data)
       if (parsed.results && Array.isArray(parsed.results)) {
+        // Check that results have the required English fields
+        if (parsed.results.length > 0) {
+          const first = parsed.results[0]
+          if (!first.seatNumber && !first.studentName) {
+            return { valid: false, error: 'الأعمدة باللغة العربية. يرجى رفع الملف مرة أخرى ليتم التحويل تلقائياً', resultCount: 0 }
+          }
+        }
         return { valid: true, error: null, resultCount: parsed.results.length }
       } else if (Array.isArray(parsed)) {
         return { valid: true, error: null, resultCount: parsed.length }
@@ -238,7 +469,6 @@ export default function ResultsManager() {
       }
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : 'خطأ في صيغة JSON'
-      // Find the position of the error
       const posMatch = errorMsg.match(/position (\d+)/i)
       if (posMatch) {
         return { valid: false, error: `خطأ في صيغة JSON عند الموضع ${posMatch[1]}`, resultCount: 0 }
@@ -261,7 +491,16 @@ export default function ResultsManager() {
     let parsed: UploadPayload
     try {
       const raw = JSON.parse(jsonData)
-      if (raw.results && Array.isArray(raw.results)) {
+      // Try normalizing again in case user pasted Arabic JSON directly
+      const { gradeName: gn, results: normalizedResults } = normalizePayload(raw)
+      const finalResults = normalizedResults.map(autoCalculateTotal)
+
+      if (finalResults.length > 0) {
+        parsed = {
+          gradeName: gradeName.trim() || gn,
+          results: finalResults as ExamResultEntry[],
+        }
+      } else if (raw.results && Array.isArray(raw.results)) {
         parsed = {
           gradeName: gradeName.trim(),
           results: raw.results,
@@ -368,7 +607,6 @@ export default function ResultsManager() {
     }
   }
 
-  // Real-time JSON validation
   const jsonValidation = validateJsonData(jsonData)
   const canUpload = gradeName.trim() && jsonData.trim() && jsonValidation.valid
 
@@ -537,7 +775,7 @@ export default function ResultsManager() {
               رفع نتائج امتحانات
             </DialogTitle>
             <DialogDescription>
-              أدخل بيانات النتائج بصيغة JSON أو ارفع ملف JSON من جهازك
+              ارفع ملف JSON بأسماء أعمدة عربية أو إنجليزية - التحويل تلقائي
             </DialogDescription>
           </DialogHeader>
 
@@ -591,15 +829,9 @@ export default function ResultsManager() {
               </div>
             </div>
 
-            {/* File Upload Mode - Using label for reliable cross-browser support */}
+            {/* File Upload Mode */}
             {inputMode === 'file' ? (
               <div className="space-y-3">
-                {/* 
-                  Using a <label> with htmlFor is the most reliable cross-browser approach
-                  for triggering file inputs, especially on mobile devices (iOS Safari).
-                  The hidden file input uses sr-only instead of display:none to remain
-                  accessible and clickable by the browser.
-                */}
                 <input
                   ref={fileInputRef}
                   id="results-file-input"
@@ -616,16 +848,29 @@ export default function ResultsManager() {
                   <p className="text-gray-600 dark:text-gray-300 font-medium mb-1">
                     ارفع ملف JSON من جهازك
                   </p>
-                  <p className="text-gray-400 text-sm mb-4">
+                  <p className="text-gray-400 text-sm mb-2">
                     اضغط هنا لاختيار ملف النتائج
                   </p>
+                  <div className="flex items-center gap-1 text-xs text-blue-500 dark:text-blue-400 mb-4">
+                    <ArrowLeftRight className="w-3 h-3" />
+                    <span>يدعم الأعمدة العربية والإنجليزية تلقائياً</span>
+                  </div>
                   <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2A374E] text-white text-sm font-medium hover:bg-[#1e2a3d] transition-colors">
                     <Upload className="w-4 h-4" />
                     اختيار ملف
                   </span>
                 </label>
 
-                {fileReadSuccess && (
+                {conversionInfo && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 flex items-center gap-2 border border-blue-200 dark:border-blue-800">
+                    <ArrowLeftRight className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span className="text-sm text-blue-700 dark:text-blue-300">
+                      {conversionInfo}
+                    </span>
+                  </div>
+                )}
+
+                {fileReadSuccess && !conversionInfo && (
                   <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span className="text-sm text-emerald-700 dark:text-emerald-300">
@@ -662,23 +907,30 @@ export default function ResultsManager() {
                   <Label htmlFor="json-data" className="font-medium">
                     بيانات JSON <span className="text-red-500">*</span>
                   </Label>
-                  {jsonData && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs h-7 text-red-500 hover:text-red-700"
-                      onClick={() => {
-                        setJsonData('')
-                        setJsonError(null)
-                        setFileReadSuccess(false)
-                        setSelectedFileName('')
-                      }}
-                    >
-                      <X className="w-3 h-3 ml-1" />
-                      مسح
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-blue-500 dark:text-blue-400 flex items-center gap-1">
+                      <ArrowLeftRight className="w-3 h-3" />
+                      تحويل تلقائي
+                    </span>
+                    {jsonData && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-7 text-red-500 hover:text-red-700"
+                        onClick={() => {
+                          setJsonData('')
+                          setJsonError(null)
+                          setFileReadSuccess(false)
+                          setSelectedFileName('')
+                          setConversionInfo(null)
+                        }}
+                      >
+                        <X className="w-3 h-3 ml-1" />
+                        مسح
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <Textarea
                   id="json-data"
@@ -688,24 +940,20 @@ export default function ResultsManager() {
                     setJsonError(null)
                     setFileReadSuccess(false)
                   }}
-                  placeholder={`{
-  "gradeName": "الأول الإعدادي",
-  "results": [
-    {
-      "seatNumber": "71200",
-      "studentName": "اسم الطالب",
-      "arabic": 28.5,
-      "english": 2,
-      "social": 3,
-      "math": 3,
-      "science": 2.5,
-      "total": 39,
-      "religion": 11,
-      "art": 5,
-      "computer": 5
-    }
-  ]
-}`}
+                  placeholder={`يمكنك لصق JSON بأسماء أعمدة عربية أو إنجليزية:
+
+أمثلة أسماء الأعمدة العربية:
+"رقم الجلوس" أو "الرقم" → seatNumber
+"اسم الطالب" أو "الاسم" → studentName
+"عربي" أو "اللغة العربية" → arabic
+"انجليزي" أو "اللغة الإنجليزية" → english
+"دراسات" أو "الدراسات الاجتماعية" → social
+"رياضيات" أو "الرياضيات" → math
+"علوم" أو "العلوم" → science
+"المجموع" → total
+"دين" أو "التربية الدينية" → religion
+"فنية" أو "التربية الفنية" → art
+"كمبيوتر" أو "الحاسب الآلي" → computer`}
                   rows={12}
                   className="font-mono text-sm text-left direction-ltr"
                   dir="ltr"
@@ -731,7 +979,7 @@ export default function ResultsManager() {
                 {!jsonData.trim() && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
-                    الصيغة المطلوبة: كائن JSON يحتوي على gradeName ومصفوفة results
+                    يدعم أسماء الأعمدة العربية والإنجليزية - التحويل تلقائي
                   </p>
                 )}
               </div>
