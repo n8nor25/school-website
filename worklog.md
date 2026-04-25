@@ -87,3 +87,24 @@ Stage Summary:
 - Passing criteria correctly implements: 50% per subject + 50% added total + pass non-added subjects
 - Files modified: ResultsManager.tsx, exam-results/route.ts, exam-results/query/route.ts, ResultsPage.tsx
 - All lint checks pass, compilation successful, API tests pass
+---
+Task ID: 1-6
+Agent: main
+Task: Add archive/term support for exam results and congratulatory message for students
+
+Work Log:
+- Added `term` (String, default "الترم الأول") and `archived` (Boolean, default false) fields to ExamResultGrade Prisma model
+- Pushed schema changes to both PostgreSQL (Supabase) and local DB
+- Updated /api/exam-results GET to support ?archived=true query param (defaults to non-archived)
+- Updated /api/exam-results POST to accept `term` field and match by gradeName+term combo
+- Added PUT handler to /api/exam-results/[id] for archive/restore and term updates
+- Updated /api/exam-results/query to filter archived results and return term info
+- Updated ResultsManager.tsx with: archive/restore buttons, term selector in upload dialog, show/hide archived toggle, term column in table
+- Updated ResultsPage.tsx with: term display in grade dropdown, term shown in student result header, congratulatory message for passing students, encouraging message for failing students
+- Fixed db.ts to use DIRECT_URL for PostgreSQL connection when system env overrides DATABASE_URL with SQLite path
+
+Stage Summary:
+- All changes pushed to GitHub (commit f6b7404)
+- Admin can now archive first term results and upload second term results
+- Students see beautiful congratulatory/encouraging messages from the designer
+- Term info (الترم الأول/الترم الثانى) visible throughout the system
