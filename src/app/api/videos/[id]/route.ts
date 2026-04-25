@@ -8,7 +8,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, description, videoUrl, duration, thumbnail, order, active } = body;
+    const { title, description, videoUrl, duration, thumbnail, order, active, archived } = body;
 
     const existing = await db.video.findUnique({ where: { id } });
     if (!existing) {
@@ -28,6 +28,7 @@ export async function PUT(
         ...(thumbnail !== undefined && { thumbnail }),
         ...(order !== undefined && { order }),
         ...(active !== undefined && { active }),
+        ...(archived !== undefined && { archived }),
       },
     });
 

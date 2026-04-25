@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Pencil, Trash2, Newspaper, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, Trash2, Newspaper, Loader2, Eye, EyeOff, Archive, ArchiveRestore } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface NewsItem {
@@ -35,6 +35,7 @@ interface NewsItem {
   content: string | null
   category: string
   active: boolean
+  archived: boolean
   order: number
   createdAt: string
   updatedAt: string
@@ -65,10 +66,11 @@ export default function NewsManager() {
   const [deletingNews, setDeletingNews] = useState<NewsItem | null>(null)
   const [formData, setFormData] = useState<NewsFormData>(defaultFormData)
   const [saving, setSaving] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
 
   const fetchNews = async () => {
     try {
-      const res = await fetch('/api/news')
+      const res = await fetch(`/api/news?archived=${showArchived}`)
       const data = await res.json()
       if (Array.isArray(data)) {
         setNews(data)
@@ -82,7 +84,7 @@ export default function NewsManager() {
 
   useEffect(() => {
     fetchNews()
-  }, [])
+  }, [showArchived])
 
   const openAddDialog = () => {
     setEditingNews(null)
@@ -179,6 +181,22 @@ export default function NewsManager() {
     }
   }
 
+  const toggleArchive = async (item: NewsItem) => {
+    try {
+      const res = await fetch(`/api/news/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: !item.archived }),
+      })
+      if (res.ok) {
+        toast.success(item.archived ? 'تم استعادة الخبر من الأرشيف' : 'تم أرشفة الخبر')
+        fetchNews()
+      }
+    } catch {
+      toast.error('حدث خطأ في تحديث الأرشيف')
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -194,21 +212,35 @@ export default function NewsManager() {
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">إدارة الأخبار</h2>
           <p className="text-gray-500 dark:text-gray-400 mt-1">إدارة أخبار وإعلانات الموقع</p>
         </div>
-        <Button
-          onClick={openAddDialog}
-          className="bg-[#2A374E] hover:bg-[#1e2a3d] text-white gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          إضافة خبر
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant={showArchived ? 'default' : 'outline'}
+            className={showArchived ? 'bg-amber-600 hover:bg-amber-700 text-white gap-2' : 'gap-2'}
+            onClick={() => setShowArchived(!showArchived)}
+          >
+            {showArchived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+            {showArchived ? 'المحتويات النشطة' : 'الأرشيف'}
+          </Button>
+          <Button
+            onClick={openAddDialog}
+            className="bg-[#2A374E] hover:bg-[#1e2a3d] text-white gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            إضافة خبر
+          </Button>
+        </div>
       </div>
 
       {news.length === 0 ? (
         <Card className="border-0 shadow-sm">
           <CardContent className="p-12 text-center">
             <Newspaper className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 text-lg">لا توجد أخبار حالياً</p>
-            <p className="text-gray-400 text-sm mt-1">اضغط على &quot;إضافة خبر&quot; لإضافة خبر جديد</p>
+            <p className="text-gray-500 dark:text-gray-400 text-lg">
+              {showArchived ? 'لا توجد أخبار مؤرشفة' : 'لا توجد أخبار حالياً'}
+            </p>
+            <p className="text-gray-400 text-sm mt-1">
+              {showArchived ? 'الأخبار المؤرشفة ستظهر هنا' : 'اضغط على "إضافة خبر" لإضافة خبر جديد'}
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -226,7 +258,7 @@ export default function NewsManager() {
               </thead>
               <tbody>
                 {news.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                  <tr key={item.id} className={`border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors ${item.archived ? 'opacity-60' : ''}`}>
                     <td className="p-4">
                       <div>
                         <p className="font-medium text-gray-800 dark:text-white">{item.title}</p>
@@ -244,15 +276,33 @@ export default function NewsManager() {
                       <span className="text-sm text-gray-600 dark:text-gray-300">#{item.order}</span>
                     </td>
                     <td className="p-4">
-                      <Badge
-                        variant={item.active ? 'default' : 'secondary'}
-                        className={item.active ? 'bg-emerald-500 text-white' : 'bg-gray-400 text-white'}
-                      >
-                        {item.active ? 'نشط' : 'غير نشط'}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={item.active ? 'default' : 'secondary'}
+                          className={item.active ? 'bg-emerald-500 text-white' : 'bg-gray-400 text-white'}
+                        >
+                          {item.active ? 'نشط' : 'غير نشط'}
+                        </Badge>
+                        {item.archived && (
+                          <Badge className="bg-amber-500 text-white">مؤرشف</Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => toggleArchive(item)}
+                          title={item.archived ? 'استعادة من الأرشيف' : 'أرشفة'}
+                        >
+                          {item.archived ? (
+                            <ArchiveRestore className="w-4 h-4 text-emerald-500" />
+                          ) : (
+                            <Archive className="w-4 h-4 text-amber-500" />
+                          )}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"

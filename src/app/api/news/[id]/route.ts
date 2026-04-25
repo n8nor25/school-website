@@ -8,7 +8,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, content, category, order, active } = body;
+    const { title, content, category, order, active, archived } = body;
 
     const existing = await db.newsItem.findUnique({ where: { id } });
     if (!existing) {
@@ -26,6 +26,7 @@ export async function PUT(
         ...(category !== undefined && { category }),
         ...(order !== undefined && { order }),
         ...(active !== undefined && { active }),
+        ...(archived !== undefined && { archived }),
       },
     });
 

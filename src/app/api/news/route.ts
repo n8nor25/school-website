@@ -1,10 +1,23 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const archivedParam = searchParams.get('archived');
+
+    const where: Record<string, unknown> = { active: true };
+    if (archivedParam === 'true') {
+      where.archived = true;
+    } else if (archivedParam === 'false') {
+      where.archived = false;
+    } else {
+      // Default: exclude archived items (for public-facing site)
+      where.archived = false;
+    }
+
     const news = await db.newsItem.findMany({
-      where: { active: true },
+      where,
       orderBy: { order: 'asc' },
     });
 

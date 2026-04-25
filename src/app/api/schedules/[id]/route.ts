@@ -8,7 +8,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, grade, fileUrl, type, uploadDate, active } = body;
+    const { title, grade, fileUrl, type, uploadDate, active, archived } = body;
 
     const existing = await db.schedule.findUnique({ where: { id } });
     if (!existing) {
@@ -27,6 +27,7 @@ export async function PUT(
         ...(type !== undefined && { type }),
         ...(uploadDate !== undefined && { uploadDate }),
         ...(active !== undefined && { active }),
+        ...(archived !== undefined && { archived }),
       },
     });
 

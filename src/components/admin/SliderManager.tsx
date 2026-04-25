@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Pencil, Trash2, Image as ImageIcon, Upload, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, Trash2, Image as ImageIcon, Upload, Loader2, Eye, EyeOff, Archive, ArchiveRestore } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface SliderImage {
@@ -65,11 +65,12 @@ export default function SliderManager() {
   const [formData, setFormData] = useState<SliderFormData>(defaultFormData)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchSliders = async () => {
     try {
-      const res = await fetch('/api/slider')
+      const res = await fetch(`/api/slider?archived=${showArchived}`)
       const data = await res.json()
       if (Array.isArray(data)) {
         setSliders(data)
@@ -83,7 +84,7 @@ export default function SliderManager() {
 
   useEffect(() => {
     fetchSliders()
-  }, [])
+  }, [showArchived])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -225,13 +226,23 @@ export default function SliderManager() {
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">إدارة السلايدر</h2>
           <p className="text-gray-500 dark:text-gray-400 mt-1">إدارة صور العرض في الصفحة الرئيسية</p>
         </div>
-        <Button
-          onClick={openAddDialog}
-          className="bg-[#2A374E] hover:bg-[#1e2a3d] text-white gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          إضافة صورة
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showArchived ? 'default' : 'outline'}
+            className={showArchived ? 'bg-amber-600 hover:bg-amber-700 text-white gap-2' : 'gap-2'}
+            onClick={() => setShowArchived(!showArchived)}
+          >
+            {showArchived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+            {showArchived ? 'الصور النشطة' : 'الأرشيف'}
+          </Button>
+          <Button
+            onClick={openAddDialog}
+            className="bg-[#2A374E] hover:bg-[#1e2a3d] text-white gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            إضافة صورة
+          </Button>
+        </div>
       </div>
 
       {sliders.length === 0 ? (
@@ -287,6 +298,33 @@ export default function SliderManager() {
                         <EyeOff className="w-4 h-4 text-gray-500" />
                       ) : (
                         <Eye className="w-4 h-4 text-emerald-500" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`/api/slider/${slider.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ archived: !showArchived }),
+                          })
+                          if (res.ok) {
+                            toast.success(showArchived ? 'تم استعادة الصورة من الأرشيف' : 'تم أرشفة الصورة')
+                            fetchSliders()
+                          }
+                        } catch {
+                          toast.error('حدث خطأ في تحديث الأرشيف')
+                        }
+                      }}
+                      title={showArchived ? 'استعادة من الأرشيف' : 'أرشفة'}
+                    >
+                      {showArchived ? (
+                        <ArchiveRestore className="w-4 h-4 text-emerald-500" />
+                      ) : (
+                        <Archive className="w-4 h-4 text-amber-500" />
                       )}
                     </Button>
                     <Button

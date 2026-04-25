@@ -8,7 +8,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, category, imageUrl, order, active } = body;
+    const { title, category, imageUrl, order, active, archived } = body;
 
     const existing = await db.sliderImage.findUnique({ where: { id } });
     if (!existing) {
@@ -26,6 +26,7 @@ export async function PUT(
         ...(imageUrl !== undefined && { imageUrl }),
         ...(order !== undefined && { order }),
         ...(active !== undefined && { active }),
+        ...(archived !== undefined && { archived }),
       },
     });
 

@@ -31,7 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Pencil, Trash2, Calendar, Upload, Loader2, FileText } from 'lucide-react'
+import { Plus, Pencil, Trash2, Calendar, Upload, Loader2, FileText, Archive, ArchiveRestore } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Schedule {
@@ -95,11 +95,12 @@ export default function ScheduleManager() {
   const [formData, setFormData] = useState<ScheduleFormData>(defaultFormData)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchSchedules = async () => {
     try {
-      const res = await fetch('/api/schedules')
+      const res = await fetch(`/api/schedules?archived=${showArchived}`)
       const data = await res.json()
       if (Array.isArray(data)) {
         setSchedules(data)
@@ -113,7 +114,7 @@ export default function ScheduleManager() {
 
   useEffect(() => {
     fetchSchedules()
-  }, [])
+  }, [showArchived])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -240,13 +241,23 @@ export default function ScheduleManager() {
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">إدارة الجداول</h2>
           <p className="text-gray-500 dark:text-gray-400 mt-1">إدارة جداول الحصص والامتحانات</p>
         </div>
-        <Button
-          onClick={openAddDialog}
-          className="bg-[#2A374E] hover:bg-[#1e2a3d] text-white gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          إضافة جدول
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant={showArchived ? 'default' : 'outline'}
+            className={showArchived ? 'bg-amber-600 hover:bg-amber-700 text-white gap-2' : 'gap-2'}
+            onClick={() => setShowArchived(!showArchived)}
+          >
+            {showArchived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+            {showArchived ? 'الجداول النشطة' : 'الأرشيف'}
+          </Button>
+          <Button
+            onClick={openAddDialog}
+            className="bg-[#2A374E] hover:bg-[#1e2a3d] text-white gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            إضافة جدول
+          </Button>
+        </div>
       </div>
 
       {schedules.length === 0 ? (
@@ -302,6 +313,33 @@ export default function ScheduleManager() {
                 )}
 
                 <div className="flex items-center gap-1 pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(`/api/schedules/${schedule.id}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ archived: !showArchived }),
+                        })
+                        if (res.ok) {
+                          toast.success(showArchived ? 'تم استعادة الجدول من الأرشيف' : 'تم أرشفة الجدول')
+                          fetchSchedules()
+                        }
+                      } catch {
+                        toast.error('حدث خطأ في تحديث الأرشيف')
+                      }
+                    }}
+                    title={showArchived ? 'استعادة من الأرشيف' : 'أرشفة'}
+                  >
+                    {showArchived ? (
+                      <ArchiveRestore className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <Archive className="w-4 h-4 text-amber-500" />
+                    )}
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"

@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Pencil, Trash2, Video, Upload, Loader2, Play, Clock } from 'lucide-react'
+import { Plus, Pencil, Trash2, Video, Upload, Loader2, Play, Clock, Archive, ArchiveRestore } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface VideoItem {
@@ -71,6 +71,7 @@ export default function VideoManager() {
   const [deletingVideo, setDeletingVideo] = useState<VideoItem | null>(null)
   const [formData, setFormData] = useState<VideoFormData>(defaultFormData)
   const [saving, setSaving] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
   const [uploadingVideo, setUploadingVideo] = useState(false)
   const [uploadingThumb, setUploadingThumb] = useState(false)
   const videoFileRef = useRef<HTMLInputElement>(null)
@@ -78,7 +79,7 @@ export default function VideoManager() {
 
   const fetchVideos = async () => {
     try {
-      const res = await fetch('/api/videos')
+      const res = await fetch(`/api/videos?archived=${showArchived}`)
       const data = await res.json()
       if (Array.isArray(data)) {
         setVideos(data)
@@ -92,7 +93,7 @@ export default function VideoManager() {
 
   useEffect(() => {
     fetchVideos()
-  }, [])
+  }, [showArchived])
 
   const uploadFile = async (file: File, type: 'video' | 'thumbnail') => {
     const setUploading = type === 'video' ? setUploadingVideo : setUploadingThumb
@@ -238,13 +239,23 @@ export default function VideoManager() {
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">إدارة الفيديوهات</h2>
           <p className="text-gray-500 dark:text-gray-400 mt-1">إدارة فيديوهات الموقع</p>
         </div>
-        <Button
-          onClick={openAddDialog}
-          className="bg-[#2A374E] hover:bg-[#1e2a3d] text-white gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          إضافة فيديو
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showArchived ? 'default' : 'outline'}
+            className={showArchived ? 'bg-amber-600 hover:bg-amber-700 text-white gap-2' : 'gap-2'}
+            onClick={() => setShowArchived(!showArchived)}
+          >
+            {showArchived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+            {showArchived ? 'الفيديوهات النشطة' : 'الأرشيف'}
+          </Button>
+          <Button
+            onClick={openAddDialog}
+            className="bg-[#2A374E] hover:bg-[#1e2a3d] text-white gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            إضافة فيديو
+          </Button>
+        </div>
       </div>
 
       {videos.length === 0 ? (
@@ -317,6 +328,33 @@ export default function VideoManager() {
                       onClick={() => openEditDialog(video)}
                     >
                       <Pencil className="w-4 h-4 text-blue-500" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`/api/videos/${video.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ archived: !showArchived }),
+                          })
+                          if (res.ok) {
+                            toast.success(showArchived ? 'تم استعادة الفيديو من الأرشيف' : 'تم أرشفة الفيديو')
+                            fetchVideos()
+                          }
+                        } catch {
+                          toast.error('حدث خطأ في تحديث الأرشيف')
+                        }
+                      }}
+                      title={showArchived ? 'استعادة من الأرشيف' : 'أرشفة'}
+                    >
+                      {showArchived ? (
+                        <ArchiveRestore className="w-4 h-4 text-emerald-500" />
+                      ) : (
+                        <Archive className="w-4 h-4 text-amber-500" />
+                      )}
                     </Button>
                     <Button
                       variant="ghost"
